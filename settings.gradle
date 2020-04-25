@@ -1,2 +1,10 @@
-
 rootProject.name = 'girakkagraph'
+
+include ':actor_protocol'
+include ':springboot'
+include ':style'
+include ':modifactory'
+include ':modifact_generation'
+include ':jooq'
+include ':jooq_generator_strategy'
+include ':container'

@@ -1,0 +1,72 @@
+apply plugin: "groovy"
+apply plugin: "idea"
+apply plugin: 'maven'
+apply plugin: 'java-gradle-plugin'
+
+def javaVersion = JavaVersion.VERSION_11
+group = 'org.hibernate.gradle.tools'
+version = '1.2.6'
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+idea {
+    module {
+        name = 'hibernate_plugin'
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
+    }
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+
+}
+
+
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = "${idea.module.name}".toString()
+            implementationClass = 'org.hibernate.gradle.tools.HibernatePlugin'
+        }
+    }
+}
+
+jar {
+    inputs.files compileGroovy.outputs.files
+    outputs.upToDateWhen { false }
+    doLast {
+        println "compileGroovy.outputs.files: ${compileGroovy.outputs.files.asPath}"
+        println "jar.outputs.files: ${jar.outputs.files.asPath}"
+    }
+}
+jar.dependsOn compileGroovy
+
+task syncOutputJarWithLib() {
+    inputs.files jar.outputs.files
+    outputs.upToDateWhen { false }
+    doLast {
+        project.logger.info("inputs_updated: ${inputs.files.asPath}")
+        def jarBaseName = idea.module.name
+        def buildLibsDir = buildDir.listFiles().find { File f -> f.name.contains('libs') && f.isDirectory() }
+        project.logger.info("{buildDir}/libs found: ${buildLibsDir}")
+        if (buildLibsDir != null) {
+            File builtJar = buildLibsDir.listFiles().find { File f -> f.name.contains(jarBaseName) } as File
+            String builtJarPath = builtJar == null ? "" : builtJar.path
+            if (builtJar != null) {
+                project.logger.info("updating ${builtJarPath}")
+                def workResult = copy {
+                    from builtJarPath
+                    into "../lib"
+                }
+                if (!workResult.didWork) {
+                    project.logger.info("${builtJarPath} was not updated")
+                }
+            }
+        }
+    }
+}
+syncOutputJarWithLib.onlyIf { jar.didWork }
+syncOutputJarWithLib.dependsOn jar
+

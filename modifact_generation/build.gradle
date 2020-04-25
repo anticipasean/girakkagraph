@@ -1,0 +1,80 @@
+plugins {
+    id 'java'
+    id 'idea'
+}
+idea {
+    module {
+        name = "modifact_generation"
+        def javaVersion = JavaVersion.VERSION_11
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
+    }
+}
+
+group 'io.github.anticipasean'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'javax.persistence:javax.persistence-api:2.2'
+    implementation 'org.apache.ant:ant:1.10.7'
+    implementation 'org.apache.commons:commons-collections4:4.4'
+    implementation 'org.eclipse.jdt:org.eclipse.jdt.core:3.21.0'
+    implementation 'org.freemarker:freemarker:2.3.30'
+    implementation 'org.hibernate:hibernate-core:5.4.14.Final'
+    implementation 'com.squareup:javapoet:1.12.1'
+    implementation 'org.hibernate.common:hibernate-commons-annotations:5.1.0.Final'
+    runtimeOnly 'jaxen:jaxen:1.2.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'com.h2database:h2:1.4.200'
+}
+
+test {
+    useJUnit()
+    testLogging {
+        showStandardStreams = true
+    }
+//    onOutput { TestDescriptor descriptor, TestOutputEvent event ->
+//        logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message)
+//    }
+    filter {
+        includeTestsMatching "*"
+    }
+    beforeTest { TestDescriptor testDescriptor ->
+        logger.lifecycle("build.gradle: beforeTest block: supply test hibernate.properties file")
+        logger.lifecycle("test_classes_directory: ${testClassesDirs.asPath}")
+        logger.lifecycle("test: [ class_name: " + testDescriptor.getClassName() + ", test_method: " + testDescriptor.name + " ]")
+        if(testDescriptor.getClassName().contains("ModifactGeneratorInMemTest")) {
+            File testClassesDir = testClassesDirs.first()
+            if (testClassesDir != null) {
+                File hibernatePropertiesFile = createHibernatePropertiesInTestClassesDir("sa", "", "jdbc:h2:mem:LocalDB;INIT=CREATE SCHEMA IF NOT EXISTS dbo", testClassesDir)
+                logger.lifecycle("test_hibernate_properties_file_path: ${hibernatePropertiesFile.path}")
+            }
+        }
+    }
+    systemProperty 'logback.configurationFile','modifact_generation/src/test/resources/logback_configuration.xml'
+}
+
+private static File createHibernatePropertiesInTestClassesDir(
+        String user,
+        String password,
+        String url, File outputDirectory)
+        throws Exception {
+    Properties properties = new Properties();
+    properties.put("hibernate.connection.username", user);
+    properties.put("hibernate.connection.password", password);
+    properties.put("hibernate.connection.url", url);
+    properties.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect")
+    properties.put("hibernate.hbm2ddl.auto","create-drop")
+    properties.put("hibernate.show-sql","true")
+    properties.put("hibernate.connection.driver_class", "org.h2.Driver")
+    properties.put("hibernatetool.metadatadialect", "org.hibernate.tool.internal.reveng.dialect.H2MetaDataDialect")
+    File propertiesFile = new File(outputDirectory, "hibernate.properties");
+    FileWriter writer = new FileWriter(propertiesFile);
+    properties.store(writer, null);
+    writer.close();
+    return propertiesFile
+}

@@ -1,0 +1,693 @@
+debug: true
+# info: ''
+logging:
+  #     config: ''
+  #     exception-conversion-word: '%wEx'
+  #     file: ''
+  #     file.max-history: 0
+  #     group:
+  level:
+    web: "DEBUG"
+    org:
+      hibernate:
+        SQL: "DEBUG"
+        engine: "DEBUG"
+        tool: "DEBUG"
+#         console: ''
+#         dateformat: yyyy-MM-dd HH:mm:ss.SSS
+#         file: ''
+#         level: '%5p'
+#     register-shutdown-hook: false
+# management:
+#     endpoint:
+#         auditevents:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         beans:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         caches:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         conditions:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         configprops:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#             keys-to-sanitize: password,secret,key,token,.*credentials.*,vcap_services,sun.java.command
+#         env:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#             keys-to-sanitize: password,secret,key,token,.*credentials.*,vcap_services,sun.java.command
+#         flyway:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         health:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#             roles: ''
+#             show-details: never
+#         heapdump:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         httptrace:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         info:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         integrationgraph:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         jolokia:
+#             config:
+#             enabled: true
+#         liquibase:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         logfile:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#             external-file: ''
+#         loggers:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         mappings:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         metrics:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         prometheus:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         scheduledtasks:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#         sessions:
+#             enabled: true
+#         shutdown:
+#             enabled: false
+#         threaddump:
+#             cache:
+#                 time-to-live: 0ms
+#             enabled: true
+#     endpoints:
+#         enabled-by-default: ''
+#         jmx:
+#             domain: org.springframework.boot
+#             exposure:
+#                 exclude: ''
+#                 include: '*'
+#             static-names: ''
+#         web:
+#             base-path: /actuator
+#             cors:
+#                 allow-credentials: ''
+#                 allowed-headers: ''
+#                 allowed-methods: ''
+#                 allowed-origins: ''
+#                 exposed-headers: ''
+#                 max-age: 1800s
+#             exposure:
+#                 exclude: ''
+#                 include: health,info
+#             path-mapping: ''
+#     health:
+#         cassandra:
+#             enabled: true
+#         couchbase:
+#             enabled: true
+#         db:
+#             enabled: true
+#         defaults:
+#             enabled: true
+#         diskspace:
+#             enabled: true
+#             path: ''
+#             threshold: 10MB
+#         elasticsearch:
+#             enabled: true
+#             indices: ''
+#             response-timeout: 100ms
+#         influxdb:
+#             enabled: true
+#         jms:
+#             enabled: true
+#         ldap:
+#             enabled: true
+#         mail:
+#             enabled: true
+#         mongo:
+#             enabled: true
+#         neo4j:
+#             enabled: true
+#         rabbit:
+#             enabled: true
+#         redis:
+#             enabled: true
+#         solr:
+#             enabled: true
+#         status:
+#             http-mapping: ''
+#             order: DOWN,OUT_OF_SERVICE,UP,UNKNOWN
+#     info:
+#         build:
+#             enabled: true
+#         defaults:
+#             enabled: true
+#         env:
+#             enabled: true
+#         git:
+#             enabled: true
+#             mode: simple
+#     metrics:
+#         distribution:
+#             maximum-expected-value:
+#             minimum-expected-value:
+#             percentiles:
+#             percentiles-histogram:
+#             sla:
+#         enable:
+#         tags:
+#         use-global-registry: true
+#         web:
+#             client:
+#                 max-uri-tags: 100
+#                 requests-metric-name: http.client.requests
+#             server:
+#                 auto-time-requests: true
+#                 max-uri-tags: 100
+#                 requests-metric-name: http.server.requests
+#     server:
+#         add-application-context-header: false
+#         address: ''
+#         port: ''
+#         servlet:
+#             context-path: ''
+#         ssl:
+#             ciphers: ''
+#             client-auth: ''
+#             enabled: true
+#             enabled-protocols: ''
+#             key-alias: ''
+#             key-password: ''
+#             key-store: ''
+#             key-store-password: ''
+#             key-store-provider: ''
+#             key-store-type: ''
+#             protocol: TLS
+#             trust-store: ''
+#             trust-store-password: ''
+#             trust-store-provider: ''
+#             trust-store-type: ''
+#     trace:
+#         http:
+#             enabled: true
+#             include: request-headers,response-headers,cookies,errors
+# server:
+#     address: ''
+#     compression:
+#         enabled: false
+#         excluded-user-agents: ''
+#         mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json,application/xml
+#         min-response-size: 2KB
+#     connection-timeout: ''
+#     error:
+#         include-exception: false
+#         include-stacktrace: never
+#         path: /error
+#         whitelabel:
+#             enabled: true
+#     http2:
+#         enabled: false
+#     jetty:
+#         acceptors: -1
+#         accesslog:
+#             append: false
+#             date-format: dd/MMM/yyyy:HH:mm:ss Z
+#             enabled: false
+#             extended-format: false
+#             file-date-format: ''
+#             filename: ''
+#             locale: ''
+#             log-cookies: false
+#             log-latency: false
+#             log-server: false
+#             retention-period: 31
+#             time-zone: GMT
+#         max-http-post-size: 200000B
+#         selectors: -1
+#     max-http-header-size: 8KB
+#     port: 8080
+#     server-header: ''
+#     servlet:
+#         application-display-name: application
+#         context-parameters:
+#         context-path: ''
+#         jsp:
+#             class-name: org.apache.jasper.servlet.JspServlet
+#             init-parameters:
+#             registered: true
+#         session:
+#             cookie:
+#                 comment: ''
+#                 domain: ''
+#                 http-only: ''
+#                 max-age: ''
+#                 name: ''
+#                 path: ''
+#                 secure: ''
+#             persistent: false
+#             store-dir: ''
+#             timeout: 30m
+#             tracking-modes: ''
+#     ssl:
+#         ciphers: ''
+#         client-auth: ''
+#         enabled: true
+#         enabled-protocols: ''
+#         key-alias: ''
+#         key-password: ''
+#         key-store: ''
+#         key-store-password: ''
+#         key-store-provider: ''
+#         key-store-type: ''
+#         protocol: TLS
+#         trust-store: ''
+#         trust-store-password: ''
+#         trust-store-provider: ''
+#         trust-store-type: ''
+#     tomcat:
+#         accept-count: 100
+#         accesslog:
+#             buffered: true
+#             directory: logs
+#             enabled: false
+#             file-date-format: .yyyy-MM-dd
+#             pattern: common
+#             prefix: access_log
+#             rename-on-rotate: false
+#             request-attributes-enabled: false
+#             rotate: true
+#             suffix: .log
+#         additional-tld-skip-patterns: ''
+#         background-processor-delay: 10s
+#         basedir: ''
+#         internal-proxies: ''
+#         max-connections: 10000
+#         max-http-post-size: 2MB
+#         max-swallow-size: 2MB
+#         max-threads: 200
+#         min-spare-threads: 10
+#         port-header: X-Forwarded-Port
+#         protocol-header: ''
+#         protocol-header-https-value: https
+#         redirect-context-root: true
+#         remote-ip-header: ''
+#         resource:
+#             allow-caching: true
+#             cache-ttl: ''
+#         uri-encoding: UTF-8
+#         use-relative-redirects: ''
+#     undertow:
+#         accesslog:
+#             dir: ''
+#             enabled: false
+#             pattern: common
+#             prefix: access_log.
+#             rotate: true
+#             suffix: log
+#         buffer-size: ''
+#         direct-buffers: ''
+#         eager-filter-init: true
+#         io-threads: ''
+#         max-http-post-size: -1B
+#         worker-threads: ''
+#     use-forward-headers: ''
+spring:
+  #     aop:
+  #         auto: true
+  #         proxy-target-class: true
+  #     application:
+  #         admin:
+  #             enabled: false
+  #             jmx-name: org.springframework.boot:type=Admin,name=SpringApplication
+  #         name: ''
+  #     autoconfigure:
+  #         exclude: ''
+  #     banner:
+  #         charset: UTF-8
+  #         image:
+  #             height: ''
+  #             invert: false
+  #             location: classpath:banner.gif
+  #             margin: 2
+  #             width: 76
+  #         location: classpath:banner.txt
+  #     beaninfo:
+  #         ignore: true
+  #     config:
+  #         additional-location: ''
+  #         location: ''
+  #         name: application
+  #     dao:
+  #         exceptiontranslation:
+  #             enabled: true
+  #     data:
+  #         jdbc:
+  #             repositories:
+  #                 enabled: true
+  #         ldap:
+  #             repositories:
+  #                 enabled: true
+  #         rest:
+  #             base-path: ''
+  #             default-media-type: ''
+  #             default-page-size: ''
+  #             detection-strategy: default
+  #             enable-enum-translation: ''
+  #             limit-param-name: ''
+  #             max-page-size: ''
+  #             page-param-name: ''
+  #             return-body-on-create: ''
+  #             return-body-on-update: ''
+  #             sort-param-name: ''
+  #         web:
+  #             pageable:
+  #                 default-page-size: 20
+  #                 max-page-size: 2000
+  #                 one-indexed-parameters: false
+  #                 page-parameter: page
+  #                 prefix: ''
+  #                 qualifier-delimiter: _
+  #                 size-parameter: size
+  #             sort:
+  #                 sort-parameter: sort
+  datasource:
+    continue-on-error: false
+    #    data: ''
+    #    data-password: ''
+    #    data-username: ''
+    #    dbcp2:
+    #    driver-class-name: 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
+    #    generate-unique-name: false
+    #    hikari:
+    initialization-mode: embedded
+    #    jmx-enabled: false
+    #    jndi-name: ''
+    #    name: ''
+    #    password: ''
+    #    platform: all
+    #    schema: 'dbo'
+    #    schema-password: ''
+    #    schema-username: ''
+    separator: ';'
+    #    sql-script-encoding: ''
+    #    tomcat:
+    #    type: ''
+  #    url: ''
+  #    username: ''
+  #    xa:
+  #      data-source-class-name: ''
+  #      properties:
+  #     devtools:
+  #         add-properties: true
+  #         livereload:
+  #             enabled: true
+  #             port: 35729
+  #         remote:
+  #             context-path: /.~~spring-boot!~
+  #             proxy:
+  #                 host: ''
+  #                 port: ''
+  #             restart:
+  #                 enabled: true
+  #             secret: ''
+  #             secret-header-name: X-AUTH-TOKEN
+  #         restart:
+  #             additional-exclude: ''
+  #             additional-paths: ''
+  #             enabled: true
+  #             exclude: META-INF/maven/**,META-INF/resources/**,resources/**,static/**,public/**,templates/**,**/*Test.class,**/*Tests.class,git.properties,META-INF/build-info.properties
+  #             log-condition-evaluation-delta: true
+  #             poll-interval: 1s
+  #             quiet-period: 400ms
+  #             trigger-file: ''
+  #     gson:
+  #         date-format: ''
+  #         disable-html-escaping: ''
+  #         disable-inner-class-serialization: ''
+  #         enable-complex-map-key-serialization: ''
+  #         exclude-fields-without-expose-annotation: ''
+  #         field-naming-policy: ''
+  #         generate-non-executable-json: ''
+  #         lenient: ''
+  #         long-serialization-policy: ''
+  #         pretty-printing: ''
+  #         serialize-nulls: ''
+  #     hazelcast:
+  #         config: ''
+  #     http:
+  #         converters:
+  #             preferred-json-mapper: ''
+  #         encoding:
+  #             charset: UTF-8
+  #             enabled: true
+  #             force: ''
+  #             force-request: ''
+  #             force-response: ''
+  #             mapping: ''
+  #         log-request-details: false
+  #     info:
+  #         build:
+  #             encoding: UTF-8
+  #             location: classpath:META-INF/build-info.properties
+  #         git:
+  #             encoding: UTF-8
+  #             location: classpath:git.properties
+  #     integration:
+  #         jdbc:
+  #             initialize-schema: embedded
+  #             schema: classpath:org/springframework/integration/jdbc/schema-@@platform@@.sql
+  #     jackson:
+  #         date-format: ''
+  #         default-property-inclusion: ''
+  #         deserialization:
+  #         generator:
+  #         joda-date-time-format: ''
+  #         locale: ''
+  #         mapper:
+  #         parser:
+  #         property-naming-strategy: ''
+  #         serialization:
+  #         time-zone: ''
+  #         visibility:
+  #     jdbc:
+  #         template:
+  #             fetch-size: -1
+  #             max-rows: -1
+  #             query-timeout: ''
+  #     jersey:
+  #         application-path: ''
+  #         filter:
+  #             order: 0
+  #         init:
+  #         servlet:
+  #             load-on-startup: -1
+  #         type: servlet
+  #     jmx:
+  #         default-domain: ''
+  #         enabled: true
+  #         server: mbeanServer
+  #         unique-names: false
+  jpa:
+    #         database: ''
+    #database-platform: 'h2'
+    generate-ddl: true
+    hibernate:
+      ddl-auto: 'create-drop'
+    #             naming:
+    #                 implicit-strategy: ''
+    #                 physical-strategy: ''
+    #             use-new-id-generator-mappings: ''
+    #         mapping-resources: ''
+    #         open-in-view: true
+    properties:
+      dialect: "org.hibernate.dialect.H2Dialect"
+      show-sql: true
+      hibernate:
+        hbm2ddl:
+          auto: 'create-drop'
+    jta:
+      enabled: true
+  #         log-dir: ''
+  #         transaction-manager-id: ''
+  #     ldap:
+  #         anonymous-read-only: false
+  #         base: ''
+  #         base-environment:
+  #         embedded:
+  #             base-dn: ''
+  #             credential:
+  #                 password: ''
+  #                 username: ''
+  #             ldif: classpath:schema.ldif
+  #             port: 0
+  #             validation:
+  #                 enabled: true
+  #                 schema: ''
+  #         password: ''
+  #         urls: ''
+  #         username: ''
+  #     mail:
+  #         default-encoding: UTF-8
+  #         host: ''
+  #         jndi-name: ''
+  #         password: ''
+  #         port: ''
+  #         properties:
+  #         protocol: smtp
+  #         test-connection: false
+  #         username: ''
+  main:
+    allow-bean-definition-overriding: false
+    banner-mode: "CONSOLE"
+  #        sources: ''
+  #        web-application-type: ''
+  #     mandatory-file-encoding: ''
+  #     messages:
+  #         always-use-message-format: false
+  #         basename: messages
+  #         cache-duration: ''
+  #         encoding: UTF-8
+  #         fallback-to-system-locale: true
+  #         use-code-as-default-message: false
+  #     mvc:
+  #         async:
+  #             request-timeout: ''
+  #         contentnegotiation:
+  #             favor-parameter: false
+  #             favor-path-extension: false
+  #             media-types:
+  #             parameter-name: ''
+  #         date-format: ''
+  #         dispatch-options-request: true
+  #         dispatch-trace-request: false
+  #         favicon:
+  #             enabled: true
+  #         formcontent:
+  #             filter:
+  #                 enabled: true
+  #         hiddenmethod:
+  #             filter:
+  #                 enabled: true
+  #         ignore-default-model-on-redirect: true
+  #         locale: ''
+  #         locale-resolver: accept-header
+  #         log-resolved-exception: false
+  #         message-codes-resolver-format: ''
+  #         pathmatch:
+  #             use-registered-suffix-pattern: false
+  #             use-suffix-pattern: false
+  #         servlet:
+  #             load-on-startup: -1
+  #             path: /
+  #         static-path-pattern: /**
+  #         throw-exception-if-no-handler-found: false
+  #         view:
+  #             prefix: ''
+  #             suffix: ''
+  #     output:
+  #         ansi:
+  #             enabled: detect
+  #     pid:
+  #         fail-on-write-error: ''
+  #         file: ''
+  profiles:
+    active: test
+    include: ''
+#     security:
+#         filter:
+#             dispatcher-types: async,error,request
+#             order: -100
+#         oauth2:
+#             client:
+#                 provider:
+#                 registration:
+#             resourceserver:
+#                 jwt:
+#                     issuer-uri: ''
+#                     jwk-set-uri: ''
+#         user:
+#             name: user
+#             password: ''
+#             roles: ''
+#     servlet:
+#         multipart:
+#             enabled: true
+#             file-size-threshold: 0B
+#             location: ''
+#             max-file-size: 1MB
+#             max-request-size: 10MB
+#             resolve-lazily: false
+#     session:
+#         hazelcast:
+#             flush-mode: on-save
+#             map-name: spring:session:sessions
+#         jdbc:
+#             cleanup-cron: 0 * * * * *
+#             initialize-schema: embedded
+#             schema: classpath:org/springframework/session/jdbc/schema-@@platform@@.sql
+#             table-name: SPRING_SESSION
+#         servlet:
+#             filter-dispatcher-types: async,error,request
+#             filter-order: -2147483598
+#         store-type: ''
+#         timeout: ''
+#     task:
+#         execution:
+#             pool:
+#                 allow-core-thread-timeout: true
+#                 core-size: 8
+#                 keep-alive: 60s
+#                 max-size: ''
+#                 queue-capacity: ''
+#             thread-name-prefix: task-
+#         scheduling:
+#             pool:
+#                 size: 1
+#             thread-name-prefix: scheduling-
+#     test:
+#         database:
+#             replace: any
+#         mockmvc:
+#             print: default
+#     transaction:
+#         default-timeout: ''
+#         rollback-on-commit-failure: ''
+# trace: false
+girakkagraph:
+  packages-to-scan-for-entities:
+    - ""
+  entity-naming-convention-factory-class:

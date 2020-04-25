@@ -1,0 +1,69 @@
+buildscript {
+    repositories {
+        flatDir {
+            dir '../lib'
+        }
+    }
+    dependencies {
+        classpath 'org.hibernate.gradle.tools:hibernate_plugin:1.2.6'
+    }
+}
+plugins {
+    id 'java'
+    id 'maven'
+    id 'idea'
+}
+apply plugin: 'hibernate_plugin'
+pluginManager.withPlugin("hibernate_plugin") {
+    println "plugin_added: " + it.name
+}
+
+idea {
+    module {
+        name = "modifactory"
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+dependencies {
+    implementation group: 'org.hibernate', name: 'hibernate-tools', version: '5.4.14.Final'
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+def revEngConfFileVarName = "reverseEngConfigXmlFile"
+task("setRevEngConfigXml") {
+    def resourcesDirectory = null
+    try {
+        resourcesDirectory = sourceSets.main.resources.srcDirs.first()
+    } catch (NoSuchElementException e) {
+        logger.log(LogLevel.ERROR, "no resources directory found under 'sourceSets.main.resources.srcDirs'", e)
+        return null
+    }
+    def reverseEngConfigXmlFile = fileTree(resourcesDirectory).find { File f -> f.name.contains("reverse_eng") }
+    if (reverseEngConfigXmlFile == null) {
+        def noSuchElementException = new NoSuchElementException("file with name containing 'reverse_eng' not found")
+        logger.log(LogLevel.ERROR, "no reverse engineering configuration xml found under 'sourceSets.main.resources.srcDirs'", noSuchElementException)
+    }
+    if (!project.extensions.extraProperties.has(revEngConfFileVarName) || project.ext[revEngConfFileVarName] == reverseEngConfigXmlFile.absolutePath) {
+        project.ext[revEngConfFileVarName] = reverseEngConfigXmlFile.absolutePath
+    }
+}
+
+task configureDatabaseSettings(dependsOn: buildscript) {
+    database {
+//        catalog = [".*": new org.hibernate.gradle.tools.Schema()]
+        user = ""
+        password = ""
+        url = "jdbc:sqlserver://___________;integratedSecurity=true;authenticationScheme=javaKerberos"
+        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+        dialect = "org.hibernate.dialect.SQLServerDialect"
+        basePackage = "model"
+        revEngXml = project.extensions.extraProperties.get(revEngConfFileVarName)
+        configXml = ""
+
+    }
+}

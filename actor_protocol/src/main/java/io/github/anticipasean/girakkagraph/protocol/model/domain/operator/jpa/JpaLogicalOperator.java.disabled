@@ -1,0 +1,41 @@
+package io.github.anticipasean.girakkagraph.protocol.model.domain.operator.jpa;
+
+import io.github.anticipasean.girakkagraph.protocol.model.domain.arity.Arity;
+import io.github.anticipasean.girakkagraph.protocol.model.domain.filter.Logic;
+import io.github.anticipasean.girakkagraph.protocol.model.domain.supplier.jpa.PredicateSupplier;
+import io.github.anticipasean.girakkagraph.protocol.model.domain.operandset.jpa.JpaCriteriaOperandSet;
+import io.github.anticipasean.girakkagraph.protocol.model.domain.operation.Operation;
+
+import java.util.function.Predicate;
+
+public interface JpaLogicalOperator {
+
+  enum Binary implements JpaCriteriaPredicateOperator, Logic {
+    ;
+
+    @Override
+    public String callName() {
+      return null;
+    }
+
+    @Override
+    public Predicate<JpaCriteriaOperandSet> operandSetValidityTest() {
+      return null;
+    }
+
+    @Override
+    public Operation<JpaCriteriaOperandSet, PredicateSupplier> operation() {
+      return null;
+    }
+
+    @Override
+    public Arity arity() {
+      return Arity.BINARY;
+    }
+
+    @Override
+    public Class<?> relatesTypes() {
+      return javax.persistence.criteria.Predicate.class;
+    }
+  }
+}

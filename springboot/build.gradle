@@ -1,0 +1,156 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+}
+plugins {
+    id 'org.springframework.boot' version '2.2.5.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+    id 'idea'
+    id 'java'
+    id 'war'
+}
+
+idea {
+    module {
+        name = "springboot"
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+
+
+    querydsl {
+        dependencies {
+
+            implementation(group: 'com.querydsl', name: 'querydsl-core', version: '4.2.1') {
+                exclude group: "org.slf4j"
+            }
+            implementation(group: 'com.querydsl', name: 'querydsl-jpa', version: '4.2.1') {
+                exclude group: "org.slf4j"
+            }
+            implementation(group: 'com.querydsl', name: 'querydsl-jpa-codegen', version: '4.2.1') {
+                exclude group: "org.slf4j"
+                exclude group: "org.hibernate.javax.persistence"
+
+            }
+        }
+    }
+
+    style {
+        dependencies {
+            implementation project(':style')
+        }
+    }
+
+    modifactory {
+        dependencies {
+            implementation project(':modifactory')
+        }
+    }
+
+}
+
+
+/*
+  Caveats:
+   - No spring-webmvc deps since we're doing webflux
+     - Error Indicator: No primary or default constructor found for interface org.springframework.web.server.ServerWebExchange
+*/
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.session:spring-session-core'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    annotationProcessor('org.springframework.boot:spring-boot-configuration-processor',
+            'com.querydsl:querydsl-apt:4.2.1:jpa',
+            'javax:javaee-api:7.0')
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation group: 'com.h2database', name: 'h2', version: '1.4.199'
+    compileClasspath group: "org.hibernate", name: 'hibernate-annotations', version: '3.5.0-Final'
+    implementation group: 'com.graphql-java', name: 'graphql-java-spring-webflux', version: '2019-06-24T11-47-27-31ab4f9'
+    implementation('com.graphql-java:graphql-java-extended-scalars:1.0.1'){
+        // uses illegal reflective access
+        exclude group: 'com.squareup.okhttp3'
+    }
+    implementation project(":actor_protocol")
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'javax.json:javax.json-api:1.1.4'
+    implementation 'org.glassfish:javax.json:1.1.4'
+
+}
+
+
+test {
+    useJUnit()
+}
+
+// Works but Spring QueryDsl currently depends on the standard "Q" prefix
+compileJava {
+    options.compilerArgs = [
+            "-parameters",
+//            "-Aquerydsl.includedPackages=${ENTITY_PACKAGE_NAME}",
+//            "-Aquerydsl.prefix=",
+//            "-Aquerydsl.suffix=Query"
+    ]
+}
+
+//Exclude the persistence.xml from resources
+//def queryDslCompileJavaTask = tasks.getByPath(":entities:compileJava")
+//task excludeOtherPersistenceXml(dependsOn: queryDslCompileJavaTask) {
+//    println it.name
+//    project(":entities").tasks.withType(Copy) {
+//        exclude "**/META-INF/**"
+//    }
+//}
+//sourceSets {
+//    generated {
+//        java {
+//
+//        }
+//    }
+//}
+
+//task generateQueryDSL(type: JavaCompile, group: 'build', description: 'Generates the QueryDSL query types') {
+//    source file(project(":entities").projectDir.path + "/src/main/java")
+//    classpath = configurations.annotationProcessor + configurations.querydsl
+//    classpath.forEach({File f -> println f.path})
+//    options.compilerArgs = [
+//            "-parameters",
+//            "-Aquerydsl.includedPackages=entities.impl",
+//            "-Aquerydsl.prefix=",
+//            "-Aquerydsl.suffix=Query",
+//            "-proc:only",
+//            "-processor", "com.querydsl.apt.jpa.JPAAnnotationProcessor.class",
+//            "-s", sourceSets.generated.java.srcDirs.iterator().next().path
+//    ]
+//    destinationDir = sourceSets.generated.java.srcDirs.iterator().next()
+//}
+//
+//compileJava {
+//    dependsOn generateQueryDSL
+//    source generateQueryDSL.destinationDir
+//}
+//
+//compileGeneratedJava {
+//    dependsOn generateQueryDSL
+//    options.warnings = false
+//    classpath += sourceSets.main.runtimeClasspath
+//}
+
+//clean {
+//    delete sourceSets.generated.java.srcDirs.iterator().next().path
+//}

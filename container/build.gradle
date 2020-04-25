@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+    id 'idea'
+}
+
+idea {
+    module {
+        name = "container"
+        def javaVersion = JavaVersion.VERSION_11
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
+    }
+}
