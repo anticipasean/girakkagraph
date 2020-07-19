@@ -15,15 +15,15 @@ public class ThenClauseImpl<E, I> implements ThenClause<E, I> {
     }
 
     @Override
-    public <O> IfNotMatchClause<E, I, O> then(Function<I, O> func) {
+    public <O> OrMatchClause<E, I, O> then(Function<I, O> func) {
         if (matchedInput != null) {
             O resultOutput = Objects.requireNonNull(func,
                                                     () -> "functionForInput may not be null")
                                     .apply(matchedInput);
-            return new IfNotMatchClauseImpl<E, I, O>(eventObject,
-                                                     resultOutput);
+            return new OrMatchClauseImpl<E, I, O>(eventObject,
+                                                  resultOutput);
         }
-        return new IfNotMatchClauseImpl<>(eventObject,
-                                          null);
+        return new OrMatchClauseImpl<>(eventObject,
+                                       null);
     }
 }

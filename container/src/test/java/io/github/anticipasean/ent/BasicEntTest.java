@@ -26,4 +26,15 @@ public class BasicEntTest {
                                    .orElse("no blah value"));
     }
 
+    @Test
+    public void mapWithPatternTest() {
+        Ent.of("blah",
+               2)
+           .mapWithPattern(integerIfMatchClause -> integerIfMatchClause.ifOfType(String.class)
+                                                                       .then(s -> "twoStr")
+                                                                       .orElse("notStr"))
+           .forEach(stringStringTuple2 -> System.out.println(
+               "tuple: " + stringStringTuple2._1() + " " + stringStringTuple2._2()));
+    }
+
 }

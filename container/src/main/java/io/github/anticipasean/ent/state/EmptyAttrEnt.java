@@ -3,7 +3,8 @@ package io.github.anticipasean.ent.state;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.Ent;
-import io.github.anticipasean.ent.pattern.IfMatchClause;
+import io.github.anticipasean.ent.pattern.MatchClause;
+import io.github.anticipasean.ent.pattern.Pattern;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.Function;
@@ -29,8 +30,13 @@ public final class EmptyAttrEnt<ID, C> implements Ent<ID, C> {
 
     @Override
     public <R> Option<R> getAndMatch(ID id,
-                                     Function<IfMatchClause<C>, R> patternMap) {
+                                     Function<MatchClause<C>, R> patternMap) {
         return Option.none();
+    }
+
+    @Override
+    public <R> Ent<ID, R> mapWithPattern(Pattern<C, R> patternFunc) {
+        return EmptyAttrEnt.emptyEnt();
     }
 
     @Override

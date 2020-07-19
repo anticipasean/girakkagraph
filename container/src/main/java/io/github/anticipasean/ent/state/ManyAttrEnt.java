@@ -4,8 +4,9 @@ import cyclops.control.Option;
 import cyclops.data.ImmutableMap;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.Ent;
+import io.github.anticipasean.ent.pattern.MatchClause;
 import io.github.anticipasean.ent.pattern.Pattern;
-import io.github.anticipasean.ent.pattern.IfMatchClause;
+import io.github.anticipasean.ent.pattern.PatternMatching;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.function.Function;
@@ -32,15 +33,29 @@ public class ManyAttrEnt<ID, C> implements Ent<ID, C> {
 
     @Override
     public <R> Ent<ID, R> map(Function<? super C, ? extends R> fn) {
-        Objects.requireNonNull(fn, "fn");
-        return new ManyAttrEnt<ID, R>(data.stream().map(tuple -> tuple.map2(fn)).toHashMap(Tuple2::_1, Tuple2::_2));
+        Objects.requireNonNull(fn,
+                               "fn");
+        return new ManyAttrEnt<ID, R>(data.stream()
+                                          .map(tuple -> tuple.map2(fn))
+                                          .toHashMap(Tuple2::_1,
+                                                     Tuple2::_2));
     }
 
     @Override
     public <R> Option<R> getAndMatch(ID id,
-                                     Function<IfMatchClause<C>, R> patternMap) {
-        Objects.requireNonNull(patternMap, "patternMap");
-        return data.get(id).map(patternMap.compose(Pattern::forObject));
+                                     Function<MatchClause<C>, R> patternMap) {
+        Objects.requireNonNull(patternMap,
+                               "patternMap");
+        return data.get(id)
+                   .map(patternMap.compose(PatternMatching::forObject));
+    }
+
+    @Override
+    public <R> Ent<ID, R> mapWithPattern(Pattern<C, R> patternFunc) {
+        return new ManyAttrEnt<ID, R>(data.mapValues(patternFunc.compose(PatternMatching.of()))
+                                          .toHashMap(Tuple2::_1,
+                                                     Tuple2::_2));
+
     }
 
     @Override

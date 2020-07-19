@@ -1,22 +1,22 @@
-buildscript {
-    repositories {
-        flatDir {
-            dir '../lib'
-        }
-    }
-    dependencies {
-        classpath 'org.hibernate.gradle.tools:hibernate_plugin:1.2.6'
-    }
-}
+//buildscript {
+//    repositories {
+//        flatDir {
+//            dir '../lib'
+//        }
+//    }
+//    dependencies {
+//        classpath 'org.hibernate.gradle.tools:hibernate_plugin:1.2.6'
+//    }
+//}
 plugins {
     id 'java'
     id 'maven'
     id 'idea'
 }
-apply plugin: 'hibernate_plugin'
-pluginManager.withPlugin("hibernate_plugin") {
-    println "plugin_added: " + it.name
-}
+//apply plugin: 'hibernate_plugin'
+//pluginManager.withPlugin("hibernate_plugin") {
+//    println "plugin_added: " + it.name
+//}
 
 idea {
     module {
@@ -26,7 +26,7 @@ idea {
     }
 }
 dependencies {
-    implementation group: 'org.hibernate', name: 'hibernate-tools', version: '5.4.14.Final'
+//    implementation group: 'org.hibernate', name: 'hibernate-tools', version: '5.4.14.Final'
 
 }
 
@@ -53,17 +53,16 @@ task("setRevEngConfigXml") {
     }
 }
 
-task configureDatabaseSettings(dependsOn: buildscript) {
-    database {
-//        catalog = [".*": new org.hibernate.gradle.tools.Schema()]
-        user = ""
-        password = ""
-        url = "jdbc:sqlserver://___________;integratedSecurity=true;authenticationScheme=javaKerberos"
-        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-        dialect = "org.hibernate.dialect.SQLServerDialect"
-        basePackage = "model"
-        revEngXml = project.extensions.extraProperties.get(revEngConfFileVarName)
-        configXml = ""
-
-    }
-}
+//task configureDatabaseSettings(dependsOn: buildscript) {
+//    database {
+//        user = ""
+//        password = ""
+//        url = "jdbc:sqlserver://___________;integratedSecurity=true;authenticationScheme=javaKerberos"
+//        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+//        dialect = "org.hibernate.dialect.SQLServerDialect"
+//        basePackage = "model"
+//        revEngXml = project.extensions.extraProperties.get(revEngConfFileVarName)
+//        configXml = ""
+//
+//    }
+//}

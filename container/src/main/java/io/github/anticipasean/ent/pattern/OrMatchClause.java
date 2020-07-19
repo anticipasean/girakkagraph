@@ -1,8 +1,8 @@
 package io.github.anticipasean.ent.pattern;
 
-public interface IfNotMatchClause<E, I, O> {
+public interface OrMatchClause<E, I, O> {
 
-    <I> IfNotMatchPredicate<E, I, O> ifOfType(Class<I> possibleType);
+    <I> OrMatchPredicate<E, I, O> ifOfType(Class<I> possibleType);
 
     O orElse(O defaultOutput);
 

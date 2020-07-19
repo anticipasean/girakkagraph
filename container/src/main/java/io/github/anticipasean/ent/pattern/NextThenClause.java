@@ -4,5 +4,6 @@ import java.util.function.Function;
 
 public interface NextThenClause<E, I, O> {
 
-    IfNotMatchClause<E, I, O> then(Function<I, O> func);
+    OrMatchClause<E, I, O> then(Function<I, O> func);
+
 }
