@@ -3,15 +3,15 @@ package io.github.anticipasean.ent.pattern;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class NextThenClauseImpl<E, I, O> implements NextThenClause<E, I, O> {
+public class OrThenClauseImpl<E, I, O> implements OrThenClause<E, I, O> {
 
     private final E eventObject;
     private final I matchedInput;
     private final O resultOutput;
 
-    public NextThenClauseImpl(E eventObject,
-                              I matchedInput,
-                              O resultOutput) {
+    public OrThenClauseImpl(E eventObject,
+                            I matchedInput,
+                            O resultOutput) {
         this.eventObject = eventObject;
         this.matchedInput = matchedInput;
         this.resultOutput = resultOutput;

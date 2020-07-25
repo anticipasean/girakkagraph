@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 
 public interface OrMatchPredicate<E, I, O> {
 
-    NextThenClause<E, I, O> and(Predicate<I> condition);
+    OrThenClause<E, I, O> and(Predicate<I> condition);
 
     OrMatchClause<E, I, O> then(Function<I, O> func);
 }

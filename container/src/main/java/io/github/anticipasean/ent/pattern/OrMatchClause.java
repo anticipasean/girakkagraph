@@ -8,7 +8,7 @@ public interface OrMatchClause<E, I, O> {
 
     <I> OrMatchPredicate<E, I, O> ifOfType(Class<I> possibleType);
 
-    NextThenClause<E, E, O> ifFits(Predicate<E> condition);
+    OrThenClause<E, E, O> ifFits(Predicate<E> condition);
 
     Option<O> get();
 

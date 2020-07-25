@@ -1,5 +1,6 @@
 package io.github.anticipasean.ent.pattern;
 
+import cyclops.data.tuple.Tuple2;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -14,8 +15,11 @@ public interface PatternMatching {
         return new MatchClauseImpl<>(someObject);
     }
 
+    static <K, V> MatchClause2<K, V> forKeyValuePair(K key, V value){
+        return new MatchClause2Impl<>(Tuple2.of(key, value));
+    }
 
-    static <S> Function<S, MatchClause<S>> of(){
+    static <S> Function<S, MatchClause<S>> startingWith(){
         return MatchClauseImpl::new;
     }
 

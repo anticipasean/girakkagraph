@@ -39,22 +39,22 @@ public class OrMatchClauseImpl<E, I, O> implements OrMatchClause<E, I, O> {
     }
 
     @Override
-    public NextThenClause<E, E, O> ifFits(Predicate<E> condition) {
+    public OrThenClause<E, E, O> ifFits(Predicate<E> condition) {
         if (resultOutput != null) {
-            return new NextThenClauseImpl<>(eventObject,
-                                            null,
-                                            resultOutput);
+            return new OrThenClauseImpl<>(eventObject,
+                                          null,
+                                          resultOutput);
         }
         if (Objects.requireNonNull(condition,
                                    "condition")
                    .test(eventObject)) {
-            return new NextThenClauseImpl<>(eventObject,
-                                            eventObject,
-                                            null);
+            return new OrThenClauseImpl<>(eventObject,
+                                          eventObject,
+                                          null);
         }
-        return new NextThenClauseImpl<>(eventObject,
-                                        null,
-                                        null);
+        return new OrThenClauseImpl<>(eventObject,
+                                      null,
+                                      null);
     }
 
     @Override
