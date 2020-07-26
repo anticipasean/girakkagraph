@@ -1,6 +1,7 @@
 package io.github.anticipasean.ent.pattern;
 
 import cyclops.control.Option;
+import cyclops.data.tuple.Tuple2;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -11,12 +12,12 @@ public interface OrMatchClause2<K, V, O> {
 
     OrThenClause2<K, V, V, O> ifKeyValueFits(BiPredicate<K, V> condition);
 
-    Option<O> get();
+    Option<Tuple2<K, O>> get();
 
-    O orElse(O defaultOutput);
+    Tuple2<K, O> orElse(O defaultOutput);
 
-    O orElseGet(Supplier<O> defaultOutputSupplier);
+    Tuple2<K, O> orElseGet(Supplier<O> defaultOutputSupplier);
 
-    <X extends RuntimeException> O orElseThrow(Supplier<X> throwableSupplier);
+    <X extends RuntimeException> Tuple2<K, O> orElseThrow(Supplier<X> throwableSupplier);
 
 }

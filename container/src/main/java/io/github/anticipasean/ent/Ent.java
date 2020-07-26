@@ -3,8 +3,8 @@ package io.github.anticipasean.ent;
 import cyclops.control.Option;
 import cyclops.data.ImmutableMap;
 import cyclops.data.tuple.Tuple2;
-import io.github.anticipasean.ent.pattern.EntPattern;
-import io.github.anticipasean.ent.pattern.Pattern;
+import io.github.anticipasean.ent.pattern.KeyValuePattern;
+import io.github.anticipasean.ent.pattern.ValuePattern;
 import io.github.anticipasean.ent.state.EmptyEnt;
 import io.github.anticipasean.ent.state.FilledEnt;
 import java.util.Iterator;
@@ -40,20 +40,22 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      */
 
     default <R> Option<R> matchGet(K key,
-                                   Pattern<V, R> pattern) {
+                                   ValuePattern<V, R> valuePattern) {
         return toImmutableMap().get(key)
-                               .map(Pattern.mapper(pattern));
+                               .map(ValuePattern.mapper(valuePattern));
     }
 
-    default <R> Ent<K, R> matchMap(Pattern<V, R> pattern){
-        return fromImmutableMap(toImmutableMap().map(Pattern.mapper(pattern)));
+    default <R> Ent<K, R> matchMap(ValuePattern<V, R> valuePattern){
+        return fromImmutableMap(toImmutableMap().map(ValuePattern.mapper(valuePattern)));
     }
 
 //    default <K2, V2> Ent<K2, V2> matchFlatMap(EntPattern<? extends K, ? extends V, ? extends K2, ? extends V2> entPattern){
 //        return fromImmutableMap(toImmutableMap().bimap(EntPattern))
 //    }
     // matchStream
-    // matchBiMap
+    default <R> Ent<K, R> matchBiMap(KeyValuePattern<K, V, R> pattern){
+        return fromImmutableMap(toImmutableMap().bimap(KeyValuePattern.pairMapper(pattern)));
+    }
     // matchIdMap
     // matchFilter
     // matchFold

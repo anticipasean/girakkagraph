@@ -63,26 +63,24 @@ public class OrMatchClause2Impl<K, V, O> implements OrMatchClause2<K, V, O> {
     }
 
     @Override
-    public Option<O> get() {
-        return Option.ofNullable(resultOutput);
+    public Option<Tuple2<K, O>> get() {
+        return Option.ofNullable(resultOutput).fold(o -> Option.of(Tuple2.of(tuple._1(), o)), Option::none);
     }
 
     @Override
-    public O orElse(O defaultOutput) {
-        return Option.ofNullable(resultOutput)
-                     .orElse(defaultOutput);
+    public Tuple2<K, O> orElse(O defaultOutput) {
+        return Option.ofNullable(resultOutput).fold(o -> Tuple2.of(tuple._1(), o), () -> Tuple2.of(tuple._1(), defaultOutput));
     }
 
     @Override
-    public O orElseGet(Supplier<O> defaultOutputSupplier) {
-        return Option.ofNullable(resultOutput)
-                     .orElseGet(defaultOutputSupplier);
+    public Tuple2<K, O> orElseGet(Supplier<O> defaultOutputSupplier) {
+        return Option.ofNullable(resultOutput).fold(o -> Tuple2.of(tuple._1(), o), () -> Tuple2.of(tuple._1(), defaultOutputSupplier.get()));
     }
 
     @Override
-    public <X extends RuntimeException> O orElseThrow(Supplier<X> throwableSupplier) {
+    public <X extends RuntimeException> Tuple2<K, O> orElseThrow(Supplier<X> throwableSupplier) {
         if (resultOutput != null) {
-            return resultOutput;
+            return Tuple2.of(tuple._1(), resultOutput);
         }
         throw throwableSupplier.get();
     }

@@ -24,7 +24,7 @@ import cyclops.function.Monoid;
 import cyclops.function.Reducer;
 import cyclops.reactive.ReactiveSeq;
 import io.github.anticipasean.ent.Ent;
-import io.github.anticipasean.ent.pattern.Pattern;
+import io.github.anticipasean.ent.pattern.ValuePatternttern;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Comparator;
@@ -79,16 +79,16 @@ public final class FilledEnt<K, V> implements Ent<K, V> {
 
     @Override
     public <R> Option<R> matchGet(K key,
-                                  Pattern<V, R> pattern) {
-        Objects.requireNonNull(pattern,
+                                  Pattern<V, R> valuePattern) {
+        Objects.requireNonNull(valuePattern,
                                "patternMap");
         return data.get(key)
-                   .map(Pattern.mapper(pattern));
+                   .map(Pattern.mapper(valuePattern));
     }
 
     @Override
-    public <R> Ent<K, R> matchMap(Pattern<V, R> pattern) {
-        return new FilledEnt<K, R>(data.mapValues(Pattern.mapper(pattern))
+    public <R> Ent<K, R> matchMap(Pattern<V, R> valuePattern) {
+        return new FilledEnt<K, R>(data.mapValues(Pattern.mapper(valuePattern))
                                        .toHashMap(Tuple2::_1,
                                                    Tuple2::_2));
 

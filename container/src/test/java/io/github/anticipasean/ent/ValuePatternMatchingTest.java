@@ -8,14 +8,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PatternMatchingTest {
+public class ValuePatternMatchingTest {
 
-    private Logger logger = LoggerFactory.getLogger(PatternMatchingTest.class);
+    private Logger logger = LoggerFactory.getLogger(ValuePatternMatchingTest.class);
 
     @Test
     public void ifFitsConditionTest() {
         Assertions.assertEquals("eq 5",
-                                PatternMatching.forObject(5)
+                                PatternMatching.forValue(5)
                                                .ifFits(integer -> integer > 6)
                                                .then(integer -> "gt 6")
                                                .ifFits(integer -> integer < 5)
@@ -89,4 +89,5 @@ public class PatternMatchingTest {
 
 
     }
+
 }

@@ -195,7 +195,7 @@ akka {
 
     deployment {
 
-      # deployment id pattern - on the format: /parent/child etc.
+      # deployment id valuePattern - on the format: /parent/child etc.
       default {
 
         # The id of the dispatcher to use for this actor.
