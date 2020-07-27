@@ -116,4 +116,32 @@ public class ValuePatternMatchingTest {
                             (Integer) 1);
     }
 
+    @Test
+    public void iterableMatchingPlusPredicateClauseTest() {
+        Set<Integer> set = new HashSet<Integer>();
+        set.add(1);
+        Object setObject = set;
+        Supplier<Number> numberSupplierResult = PatternMatching.forValue(setObject)
+                                                               .ifIterableOver(Float.class)
+                                                               .and(floats -> floats.allMatch(aFloat -> aFloat > 1.0f))
+                                                               .then(floats -> (Supplier<Number>) () -> floats.findFirst()
+                                                                                                              .orElse(2.0F))
+                                                               .ifIterableOver(BigDecimal.class)
+                                                               .then(bigDecimals -> () -> bigDecimals.max(BigDecimal::compareTo)
+                                                                                                     .orElse(BigDecimal.TEN))
+                                                               .ifIterableOver(Integer.class)
+                                                               .and(integers -> integers.findFirst()
+                                                                                        .orElse(-1) == 40)
+                                                               .then(integers -> () -> integers.findFirst()
+                                                                                               .orElse(7))
+                                                               .ifIterableOver(Integer.class)
+                                                               .and(integers -> integers.findFirst()
+                                                                                        .orElse(-1) == 1)
+                                                               .then(integers -> () -> integers.findFirst()
+                                                                                               .orElse(-1))
+                                                               .orElse(() -> 8);
+        Assert.assertEquals(numberSupplierResult.get(),
+                            (Integer) 1);
+    }
+
 }
