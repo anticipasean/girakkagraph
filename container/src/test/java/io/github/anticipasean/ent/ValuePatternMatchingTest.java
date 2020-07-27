@@ -3,10 +3,13 @@ package io.github.anticipasean.ent;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.pattern.PatternMatching;
 import java.math.BigDecimal;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 public class ValuePatternMatchingTest {
 
@@ -14,43 +17,44 @@ public class ValuePatternMatchingTest {
 
     @Test
     public void ifFitsConditionTest() {
-        Assertions.assertEquals("eq 5",
-                                PatternMatching.forValue(5)
-                                               .ifFits(integer -> integer > 6)
-                                               .then(integer -> "gt 6")
-                                               .ifFits(integer -> integer < 5)
-                                               .then(integer -> "lt 5")
-                                               .ifFits(integer -> integer == 5)
-                                               .then(integer -> "eq 5")
-                                               .orElse("no Match"));
+        Assert.assertEquals("eq 5",
+                            PatternMatching.forValue(5)
+                                           .ifFits(integer -> integer > 6)
+                                           .then(integer -> "gt 6")
+                                           .ifFits(integer -> integer < 5)
+                                           .then(integer -> "lt 5")
+                                           .ifFits(integer -> integer == 5)
+                                           .then(integer -> "eq 5")
+                                           .orElse("no Match"));
     }
 
     @Test
     public void ifKeyFitsAndValueOfTypeConditionTest() {
         Number numberFive = Integer.valueOf(5);
-        String patternMatchingResult = PatternMatching.forKeyValuePair("five",
-                                                                       numberFive)
-                                                      .ifKeyFitsAndValueOfType(s -> s.equalsIgnoreCase("one-half"),
-                                                                               Double.class)
-                                                      .andValueFits(aDouble -> aDouble.compareTo(0.5D) == 0)
-                                                      .then((s, aDouble) -> "0.5")
-                                                      .ifKeyFitsAndValueOfType(s -> "five".equalsIgnoreCase(s),
-                                                                               BigDecimal.class)
-                                                      .and(bigDecForm -> BigDecimal.valueOf(5.0000D)
-                                                                                   .equals(bigDecForm))
-                                                      .then((s, bigDecimalForm) -> "5.0000")
-                                                      .ifKeyFitsAndValueOfType(s -> "five".equalsIgnoreCase(s),
-                                                                               Integer.class)
-                                                      .and(integer -> 5 == integer)
-                                                      .then((s, integerForm) -> "5")
-                                                      .orElse("No Match");
-        logger.info("pattern_matching_result: [ expected: {} as {}, actual: {} as {} ]",
+        Tuple2<String, String> patternMatchingResult = PatternMatching.forKeyValuePair("five",
+                                                                                       numberFive)
+                                                                      .ifKeyFitsAndValueOfType(s -> s.equalsIgnoreCase("one-half"),
+                                                                                               Double.class)
+                                                                      .andValueFits(aDouble -> aDouble.compareTo(0.5D) == 0)
+                                                                      .then((s, aDouble) -> "0.5")
+                                                                      .ifKeyFitsAndValueOfType(s -> "five".equalsIgnoreCase(s),
+                                                                                               BigDecimal.class)
+                                                                      .and(bigDecForm -> BigDecimal.valueOf(5.0000D)
+                                                                                                   .equals(bigDecForm))
+                                                                      .then((s, bigDecimalForm) -> "5.0000")
+                                                                      .ifKeyFitsAndValueOfType(s -> "five".equalsIgnoreCase(s),
+                                                                                               Integer.class)
+                                                                      .and(integer -> 5 == integer)
+                                                                      .then((s, integerForm) -> "5")
+                                                                      .orElse("No Match");
+        logger.info("pattern_matching_result: [ value expected: {} as {}, actual: {} as {} ]",
                     "5",
                     String.class,
-                    patternMatchingResult,
-                    patternMatchingResult.getClass());
-        Assertions.assertEquals("5",
-                                patternMatchingResult);
+                    patternMatchingResult._2(),
+                    patternMatchingResult._2()
+                                         .getClass());
+        Assert.assertEquals("5",
+                            patternMatchingResult._2());
 
 
     }
@@ -76,18 +80,40 @@ public class ValuePatternMatchingTest {
                                                                                                      Integer.valueOf(5)
                                                                                                             .toString()))
                                                                       .orElse(Tuple2.of("noMatch",
-                                                                                        "noMatch"));
+                                                                                        "noMatch"))
+                                                                      .fold((s, stringStringTuple2) -> stringStringTuple2);
         logger.info("pattern_matching_result: [ expected: {} as {}, actual: {} as {} ]",
                     Tuple2.of("five",
                               "5"),
                     Tuple2.class,
                     patternMatchingResult,
                     patternMatchingResult.getClass());
-        Assertions.assertEquals(Tuple2.of("five",
-                                          "5"),
-                                patternMatchingResult);
+        Assert.assertEquals(Tuple2.of("five",
+                                      "5"),
+                            patternMatchingResult);
 
 
+    }
+
+    @Test
+    public void iterableMatchingTest() {
+        Set<Integer> set = new HashSet<Integer>();
+        set.add(1);
+        Object setObject = set;
+        Supplier<Number> numberSupplierResult = PatternMatching.forValue(setObject)
+                                                               .ifIterableOver(Float.class)
+                                                               .and(floats -> floats.allMatch(aFloat -> aFloat > 1.0f))
+                                                               .then(floats -> (Supplier<Number>) () -> floats.findFirst()
+                                                                                                              .orElse(2.0F))
+                                                               .ifIterableOver(BigDecimal.class)
+                                                               .then(bigDecimals -> () -> bigDecimals.max(BigDecimal::compareTo)
+                                                                                                     .orElse(BigDecimal.TEN))
+                                                               .ifIterableOver(Integer.class)
+                                                               .then(integers -> () -> integers.findFirst()
+                                                                                               .orElse(7))
+                                                               .orElse(() -> 8);
+        Assert.assertEquals(numberSupplierResult.get(),
+                            (Integer) 1);
     }
 
 }

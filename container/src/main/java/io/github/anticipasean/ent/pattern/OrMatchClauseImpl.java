@@ -1,58 +1,85 @@
 package io.github.anticipasean.ent.pattern;
 
+import static java.util.Objects.nonNull;
+
 import cyclops.control.Option;
+import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class OrMatchClauseImpl<E, I, O> implements OrMatchClause<E, I, O> {
+public class OrMatchClauseImpl<V, I, O> implements OrMatchClause<V, I, O> {
 
-    private final E eventObject;
+    private final V valueObject;
     private final O resultOutput;
 
-    public OrMatchClauseImpl(E eventObject,
+    public OrMatchClauseImpl(V valueObject,
                              O resultOutput) {
-        this.eventObject = eventObject;
+        this.valueObject = valueObject;
         this.resultOutput = resultOutput;
     }
 
     @Override
-    public <I> OrMatchPredicate<E, I, O> ifOfType(Class<I> possibleType) {
+    public <I> OrMatchPredicate<V, I, O> ifOfType(Class<I> possibleType) {
         PatternMatching.logger.info("if_not_matches_type: state: obj {}, matches_type {}, result_output {}",
-                                    eventObject,
-                                    PatternMatching.isOfType(eventObject,
+                                    valueObject,
+                                    PatternMatching.isOfType(valueObject,
                                                              possibleType),
                                     resultOutput);
         if (resultOutput != null) {
-            return new OrMatchPredicateImpl<>(eventObject,
+            return new OrMatchPredicateImpl<>(valueObject,
                                               null,
                                               resultOutput);
-        } else if (PatternMatching.isOfType(eventObject,
+        } else if (PatternMatching.isOfType(valueObject,
                                             possibleType)) {
-            return new OrMatchPredicateImpl<>(eventObject,
-                                              possibleType,
+            return new OrMatchPredicateImpl<>(valueObject,
+                                              PatternMatching.tryDynamicCast(valueObject,
+                                                                             possibleType)
+                                                             .orElse(null),
                                               null);
         }
-        return new OrMatchPredicateImpl<>(eventObject,
+        return new OrMatchPredicateImpl<>(valueObject,
                                           null,
                                           null);
     }
 
     @Override
-    public OrThenClause<E, E, O> ifFits(Predicate<E> condition) {
+    public <E> OrMatchIterablePredicate<V, E, O> ifIterableOver(Class<E> elementType) {
         if (resultOutput != null) {
-            return new OrThenClauseImpl<>(eventObject,
+            return new OrMatchIterablePredicateImpl<>(valueObject,
+                                                      null,
+                                                      resultOutput);
+        } else if (PatternMatching.isOfType(valueObject,
+                                            Iterable.class) && nonNull(elementType)) {
+            Iterable iterable = PatternMatching.tryDynamicCast(valueObject,
+                                                               Iterable.class)
+                                               .orElse(null);
+            return new OrMatchIterablePredicateImpl<>(valueObject,
+                                                      () -> new TypeCheckingIterator<>(iterable.iterator(),
+                                                                                       elementType),
+                                                      null);
+        } else {
+            return new OrMatchIterablePredicateImpl<>(valueObject,
+                                                      null,
+                                                      null);
+        }
+    }
+
+    @Override
+    public OrThenClause<V, V, O> ifFits(Predicate<V> condition) {
+        if (resultOutput != null) {
+            return new OrThenClauseImpl<>(valueObject,
                                           null,
                                           resultOutput);
         }
         if (Objects.requireNonNull(condition,
                                    "condition")
-                   .test(eventObject)) {
-            return new OrThenClauseImpl<>(eventObject,
-                                          eventObject,
+                   .test(valueObject)) {
+            return new OrThenClauseImpl<>(valueObject,
+                                          valueObject,
                                           null);
         }
-        return new OrThenClauseImpl<>(eventObject,
+        return new OrThenClauseImpl<>(valueObject,
                                       null,
                                       null);
     }

@@ -1,33 +1,72 @@
 package io.github.anticipasean.ent;
 
+import static java.util.Objects.requireNonNull;
+
+import com.oath.cyclops.types.persistent.PersistentMap;
 import cyclops.control.Option;
+import cyclops.control.Try;
+import cyclops.data.HashMap;
 import cyclops.data.ImmutableMap;
+import cyclops.data.TreeMap;
 import cyclops.data.tuple.Tuple2;
+import cyclops.function.Reducer;
+import cyclops.reactive.ReactiveSeq;
 import io.github.anticipasean.ent.pattern.KeyValuePattern;
 import io.github.anticipasean.ent.pattern.ValuePattern;
-import io.github.anticipasean.ent.state.EmptyEnt;
-import io.github.anticipasean.ent.state.FilledEnt;
+import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Objects;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 
 public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
 
+    static final boolean PARALLEL = true;
+
+    static <K, V> Ent<K, V> of(K key,
+                               V value) {
+        requireNonNull(key,
+                       "key");
+        requireNonNull(value,
+                       "value");
+        return fromImmutableMap(HashMap.of(key,
+                                           value));
+    }
+
+    static <K, V> Ent<K, V> ofSorted(K key,
+                                     V value,
+                                     Comparator<K> keyComparator) {
+        requireNonNull(key,
+                       "key");
+        requireNonNull(value,
+                       "value");
+        return fromImmutableMap(TreeMap.of(keyComparator,
+                                           key,
+                                           value));
+    }
 
     static <K, V> Ent<K, V> empty() {
-        return EmptyEnt.emptyEnt();
+        return fromImmutableMap(HashMap.empty());
+    }
+
+    static <K, V> Ent<K, V> emptySorted(Comparator<K> keyComparator) {
+        requireNonNull(keyComparator,
+                       "keyComparator");
+        return fromImmutableMap(TreeMap.empty(keyComparator));
     }
 
     static <K, V> Ent<K, V> fromImmutableMap(ImmutableMap<K, V> immutableMap) {
         return Option.ofNullable(immutableMap)
-                     .filterNot(ImmutableMap::isEmpty)
-                     .fold(FilledEnt::new,
-                           EmptyEnt::emptyEnt);
+                     .fold(EntImpl::new,
+                           () -> new EntImpl<>(HashMap.empty()));
     }
 
     /**
@@ -45,31 +84,79 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                .map(ValuePattern.mapper(valuePattern));
     }
 
-    default <R> Ent<K, R> matchMap(ValuePattern<V, R> valuePattern){
+    default <R> Option<Tuple2<K, R>> matchGet(K key,
+                                              KeyValuePattern<K, V, R> keyValuePattern) {
+        return toImmutableMap().get(key)
+                               .fold(v -> Option.of(Tuple2.of(key,
+                                                              v))
+                                                .map(KeyValuePattern.tupleMapper(keyValuePattern)),
+                                     Option::none);
+    }
+
+    default <R> Ent<K, R> matchMap(ValuePattern<V, R> valuePattern) {
         return fromImmutableMap(toImmutableMap().map(ValuePattern.mapper(valuePattern)));
     }
 
-//    default <K2, V2> Ent<K2, V2> matchFlatMap(EntPattern<? extends K, ? extends V, ? extends K2, ? extends V2> entPattern){
-//        return fromImmutableMap(toImmutableMap().bimap(EntPattern))
-//    }
-    // matchStream
-    default <R> Ent<K, R> matchBiMap(KeyValuePattern<K, V, R> pattern){
-        return fromImmutableMap(toImmutableMap().bimap(KeyValuePattern.pairMapper(pattern)));
+    default <R> Ent<K, R> matchFlatMap(ValuePattern<V, Ent<K, R>> valuePattern) {
+        requireNonNull(valuePattern,
+                       "valuePattern");
+        return fromImmutableMap(toImmutableMap().flatMap((k, v) -> ValuePattern.mapper(valuePattern)
+                                                                               .apply(v)
+                                                                               .toImmutableMap()));
     }
+
+    default <R> ReactiveSeq<Tuple2<K, R>> matchMapToReactiveSeqStream(ValuePattern<V, R> valuePattern) {
+        requireNonNull(valuePattern,
+                       "valuePattern");
+        return toImmutableMap().map(ValuePattern.mapper(valuePattern))
+                               .stream();
+    }
+
+    default <R> Stream<Tuple2<K, R>> matchMapToJavaUtilStream(ValuePattern<V, R> valuePattern) {
+        requireNonNull(valuePattern,
+                       "valuePattern");
+        boolean PARALLEL = true;
+        return StreamSupport.stream(toImmutableMap().map(ValuePattern.mapper(valuePattern))
+                                                    .stream()
+                                                    .spliterator(),
+                                    PARALLEL);
+    }
+
+    default <R> Ent<K, R> matchBiMap(KeyValuePattern<K, V, R> keyValuePattern) {
+        requireNonNull(keyValuePattern,
+                       "keyValuePattern");
+        return fromImmutableMap(toImmutableMap().bimap(KeyValuePattern.pairMapper(keyValuePattern)));
+    }
+
+    default <R> ReactiveSeq<Tuple2<K, R>> matchBiMapToReactiveSeqStream(KeyValuePattern<K, V, R> keyValuePattern) {
+        requireNonNull(keyValuePattern,
+                       "keyValuePattern");
+        return toImmutableMap().bimap(KeyValuePattern.pairMapper(keyValuePattern))
+                               .stream();
+    }
+
+    default <R> Stream<Tuple2<K, R>> matchBiMapToJavaUtilStream(KeyValuePattern<K, V, R> keyValuePattern) {
+        requireNonNull(keyValuePattern,
+                       "keyValuePattern");
+        return StreamSupport.stream(toImmutableMap().bimap(KeyValuePattern.pairMapper(keyValuePattern))
+                                                    .stream()
+                                                    .spliterator(),
+                                    PARALLEL);
+    }
+
     // matchIdMap
     // matchFilter
     // matchFold
     // matchIterableGet(ID id, Function<C, Iterable<E>> func
 
-    //    <R> Stream<R> matchExtract(K id,
-    //                               Pattern<Object, R> pattern);
+    default <R> Stream<R> matchExtractValueStream(K key,
+                                   ValuePattern<V, R> pattern){
+        return null;
+    }
 
     /**
      * Iterable methods
      */
-    default int size() {
-        return toImmutableMap().size();
-    }
 
     @Override
     default Iterator<Tuple2<K, V>> iterator() {
@@ -81,48 +168,58 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      */
 
     default <R> Ent<K, R> map(Function<? super V, ? extends R> fn) {
-        Objects.requireNonNull(fn,
-                               "fn");
+        requireNonNull(fn,
+                       "fn");
         return fromImmutableMap(toImmutableMap().map(fn));
     }
 
     default <R> Ent<K, R> mapValues(Function<? super V, ? extends R> mapper) {
-        Objects.requireNonNull(mapper,
-                               "mapper");
+        requireNonNull(mapper,
+                       "mapper");
         return fromImmutableMap(toImmutableMap().map(mapper));
     }
 
     default <R> Ent<R, V> mapKeys(Function<? super K, ? extends R> mapper) {
-        Objects.requireNonNull(mapper,
-                               "mapper");
+        requireNonNull(mapper,
+                       "mapper");
         return fromImmutableMap(toImmutableMap().mapKeys(mapper));
     }
 
     default <R1, R2> Ent<R1, R2> bimap(BiFunction<? super K, ? super V, ? extends Tuple2<R1, R2>> mapper) {
-        Objects.requireNonNull(mapper,
-                               "mapper");
+        requireNonNull(mapper,
+                       "mapper");
         return fromImmutableMap(toImmutableMap().bimap(mapper));
     }
 
     default <R1, R2> Ent<R1, R2> bimap(Function<? super K, ? extends R1> keyMapper,
                                        Function<? super V, ? extends R2> valueMapper) {
-        Objects.requireNonNull(keyMapper,
-                               "keyMapper");
-        Objects.requireNonNull(valueMapper,
-                               "valueMapper");
+        requireNonNull(keyMapper,
+                       "keyMapper");
+        requireNonNull(valueMapper,
+                       "valueMapper");
         return fromImmutableMap(toImmutableMap().bimap(keyMapper,
                                                        valueMapper));
     }
 
-    default <K2, V2> Ent<K2, V2> flatMap(BiFunction<? super K, ? super V, ? extends ImmutableMap<K2, V2>> mapper) {
-        Objects.requireNonNull(mapper,
-                               "mapper");
-        return fromImmutableMap(toImmutableMap().flatMap(mapper));
+    default <K2, V2> Ent<K2, V2> flatMap(BiFunction<? super K, ? super V, ? extends Ent<K2, V2>> mapper) {
+        requireNonNull(mapper,
+                       "mapper");
+        return fromImmutableMap(toImmutableMap().flatMap((k, v) -> mapper.apply(k,
+                                                                                v)
+                                                                         .toImmutableMap()));
+    }
+
+    default <K2, V2> Ent<K2, V2> flatMap(Function<Tuple2<? super K, ? super V>, ? extends Ent<K2, V2>> mapper) {
+        requireNonNull(mapper,
+                       "mapper");
+        return fromImmutableMap(toImmutableMap().flatMap((k, v) -> mapper.apply(Tuple2.of(k,
+                                                                                          v))
+                                                                         .toImmutableMap()));
     }
 
     default <K2, V2> Ent<K2, V2> concatMap(BiFunction<? super K, ? super V, ? extends Iterable<Tuple2<K2, V2>>> mapper) {
-        Objects.requireNonNull(mapper,
-                               "mapper");
+        requireNonNull(mapper,
+                       "mapper");
         return fromImmutableMap(toImmutableMap().concatMap(mapper));
     }
 
@@ -156,26 +253,26 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      */
 
     default Ent<K, V> filter(Predicate<? super Tuple2<K, V>> predicate) {
-        Objects.requireNonNull(predicate,
-                               "predicate");
+        requireNonNull(predicate,
+                       "predicate");
         return fromImmutableMap(toImmutableMap().filter(predicate));
     }
 
     default Ent<K, V> filterKeys(Predicate<? super K> predicate) {
-        Objects.requireNonNull(predicate,
-                               "predicate");
+        requireNonNull(predicate,
+                       "predicate");
         return fromImmutableMap(toImmutableMap().filterKeys(predicate));
     }
 
     default Ent<K, V> filterValues(Predicate<? super V> predicate) {
-        Objects.requireNonNull(predicate,
-                               "predicate");
+        requireNonNull(predicate,
+                       "predicate");
         return fromImmutableMap(toImmutableMap().filterValues(predicate));
     }
 
     default Ent<K, V> filterNot(Predicate<? super Tuple2<K, V>> predicate) {
-        Objects.requireNonNull(predicate,
-                               "predicate");
+        requireNonNull(predicate,
+                       "predicate");
         return fromImmutableMap(toImmutableMap().filterNot(predicate));
     }
 
@@ -215,118 +312,295 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     }
 
     default String join(String sep) {
-        Objects.requireNonNull(sep,
-                               "sep");
+        requireNonNull(sep,
+                       "sep");
         return toImmutableMap().join(sep);
     }
 
     default String join(String sep,
                         String start,
                         String end) {
-        Objects.requireNonNull(sep,
-                               "sep");
-        Objects.requireNonNull(start,
-                               "start");
-        Objects.requireNonNull(end,
-                               "end");
+        requireNonNull(sep,
+                       "sep");
+        requireNonNull(start,
+                       "start");
+        requireNonNull(end,
+                       "end");
         return toImmutableMap().join(sep,
                                      start,
                                      end);
     }
 
     /**
-     * Monadic Methods: Alternative Paths
+     * Monadic Methods: Alternative Paths When Empty
      */
 
-    //    Ent<K, V> onEmpty(Tuple2<K, V> value);
-    //
-    //    Ent<K, V> onEmptyGet(Supplier<? extends Tuple2<K, V>> supplier);
-    //
-    //    <X extends Throwable> Try<Ent<K, V>, X> onEmptyTry(Supplier<? extends X> supplier);
-    //
-    //    Ent<K, V> onEmptySwitch(Supplier<? extends Ent<K, V>> supplier);
+    default Ent<K, V> onEmpty(Tuple2<K, V> value) {
+        requireNonNull(value,
+                       "value");
+        return fromImmutableMap(toImmutableMap().onEmpty(value));
+    }
+
+    default Ent<K, V> onEmptyGet(Supplier<? extends Tuple2<K, V>> supplier) {
+        requireNonNull(supplier,
+                       "supplier");
+        return fromImmutableMap(toImmutableMap().onEmptyGet(supplier));
+    }
+
+    default <X extends Throwable> Try<Ent<K, V>, X> onEmptyTry(Supplier<? extends X> supplier) {
+        requireNonNull(supplier,
+                       "supplier");
+        return isEmpty() ? Try.failure(supplier.get()) : Try.success(this);
+    }
+
+    default Ent<K, V> onEmptySwitch(Supplier<? extends Ent<K, V>> supplier) {
+        requireNonNull(supplier,
+                       "supplier");
+        return isEmpty() ? supplier.get() : this;
+    }
 
     /**
      * Monadic Methods: Reduction
      */
 
-    //    <R> R foldMap(Reducer<R, Tuple2<K, V>> reducer);
-    //
-    //    <R> R foldMap(Function<? super Tuple2<K, V>, ? extends R> mapper,
-    //                  Monoid<R> reducer);
-    //
-    //    Option<Tuple2<K, V>> foldLeft(BinaryOperator<Tuple2<K, V>> accumulator);
-    //
-    //    <U> U foldLeft(U identity,
-    //                   BiFunction<U, ? super Tuple2<K, V>, U> accumulator);
-    //
-    //    <U> U foldLeft(U identity,
-    //                   BiFunction<U, ? super Tuple2<K, V>, U> accumulator,
-    //                   BinaryOperator<U> combiner);
-    //
-    //    Tuple2<K, V> foldLeft(Tuple2<K, V> identity,
-    //                          BinaryOperator<Tuple2<K, V>> accumulator);
-    //
-    //    Tuple2<K, V> foldLeft(Monoid<Tuple2<K, V>> reducer);
-    //
-    //    Seq<Tuple2<K, V>> foldLeft(Iterable<? extends Monoid<Tuple2<K, V>>> reducers);
-    //
-    //    Tuple2<K, V> foldRight(Monoid<Tuple2<K, V>> reducer);
-    //
-    //    Tuple2<K, V> foldRight(Tuple2<K, V> identity,
-    //                           BinaryOperator<Tuple2<K, V>> accumulator);
-    //
-    //    <U> U foldRight(U identity,
-    //                    BiFunction<? super Tuple2<K, V>, ? super U, ? extends U> accumulator);
-    //
-    //    <R> R foldMapRight(Reducer<R, Tuple2<K, V>> reducer);
+    default <R> R foldMap(R zero,
+                          BiFunction<K, V, R> mapper,
+                          BinaryOperator<R> combiner) {
+        requireNonNull(zero,
+                       "zero");
+        requireNonNull(mapper,
+                       "mapper");
+        requireNonNull(combiner,
+                       "combiner");
+        return toImmutableMap().foldMap(Reducer.of(zero,
+                                                   combiner,
+                                                   tuple2 -> mapper.apply(tuple2._1(),
+                                                                          tuple2._2())));
+    }
+
+    default <R> R foldMap(R zero,
+                          Function<Tuple2<K, V>, R> mapper,
+                          BinaryOperator<R> combiner) {
+        requireNonNull(zero,
+                       "zero");
+        requireNonNull(mapper,
+                       "mapper");
+        requireNonNull(combiner,
+                       "combiner");
+        return toImmutableMap().foldMap(Reducer.of(zero,
+                                                   combiner,
+                                                   mapper));
+    }
+
+    default Option<Tuple2<K, V>> foldLeft(BinaryOperator<Tuple2<K, V>> accumulator) {
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldLeft(accumulator);
+    }
+
+    default <U> U foldLeft(U identity,
+                           BiFunction<U, ? super Tuple2<K, V>, U> accumulator) {
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldLeft(identity,
+                                         accumulator);
+    }
+
+    default <U> U foldLeft(U identity,
+                           BiFunction<U, ? super Tuple2<K, V>, U> accumulator,
+                           BinaryOperator<U> combiner) {
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        requireNonNull(combiner,
+                       "combiner");
+        return toImmutableMap().foldLeft(identity,
+                                         accumulator,
+                                         combiner);
+    }
+
+    default Tuple2<K, V> foldLeft(Tuple2<K, V> identity,
+                                  BinaryOperator<Tuple2<K, V>> accumulator) {
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldLeft(identity,
+                                         accumulator);
+    }
+
+    default Tuple2<K, V> foldRight(Tuple2<K, V> identity,
+                                   BinaryOperator<Tuple2<K, V>> accumulator) {
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldRight(identity,
+                                          accumulator);
+    }
+
+    default <U> U foldRight(U identity,
+                            BiFunction<? super Tuple2<K, V>, ? super U, ? extends U> accumulator) {
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldRight(identity,
+                                          accumulator);
+    }
+
+    default <R> R foldMapRight(R zero,
+                               BiFunction<K, V, R> mapper,
+                               BinaryOperator<R> combiner) {
+        requireNonNull(zero,
+                       "zero");
+        requireNonNull(mapper,
+                       "mapper");
+        requireNonNull(combiner,
+                       "combiner");
+        return toImmutableMap().foldMapRight(Reducer.of(zero,
+                                                        combiner,
+                                                        tuple2 -> mapper.apply(tuple2._1(),
+                                                                               tuple2._2())));
+    }
 
     /**
-     * Map Methods
+     * Map Data Structure Methods
      */
 
-    //    Option<V> get(K key);
-    //
-    //    V getOrElse(K key,
-    //                V alt);
-    //
-    //    V getOrElseGet(K key,
-    //                   Supplier<? extends V> alt);
-    //
-    //    Ent<K, V> put(K key,
-    //                  V value);
-    //
-    //    Ent<K, V> put(Tuple2<K, V> keyAndValue);
-    //
-    //    Ent<K, V> putAll(PersistentMap<? extends K, ? extends V> map);
-    //
-    //    Ent<K, V> remove(K key);
-    //
-    //    Ent<K, V> removeAll(K... keys);
-    //
-    //    ReactiveSeq<K> keys();
-    //
-    //    ReactiveSeq<V> values();
-    //
-    //    Ent<K, V> removeAllKeys(Iterable<? extends K> keys);
-    //
-    //    boolean containsValue(V value);
-    //
-    //    boolean isEmpty();
-    //
-    //    boolean containsKey(K key);
-    //
-    //    boolean contains(Tuple2<K, V> t);
+    default Option<V> get(K key) {
+        requireNonNull(key,
+                       "key");
+        return toImmutableMap().get(key);
+    }
+
+    default V getOrElse(K key,
+                        V alt) {
+        requireNonNull(key,
+                       "key");
+        return toImmutableMap().getOrElse(key,
+                                          alt);
+    }
+
+    default V getOrElseGet(K key,
+                           Supplier<? extends V> alt) {
+        requireNonNull(key,
+                       "key");
+        return toImmutableMap().getOrElseGet(key,
+                                             alt);
+    }
+
+    default Ent<K, V> put(K key,
+                          V value) {
+        requireNonNull(key,
+                       "key");
+        requireNonNull(value,
+                       "value");
+        return fromImmutableMap(toImmutableMap().put(key,
+                                                     value));
+    }
+
+    default Ent<K, V> put(Tuple2<K, V> keyAndValue) {
+
+        requireNonNull(keyAndValue,
+                       "keyAndValue");
+        return fromImmutableMap(toImmutableMap().put(keyAndValue));
+    }
+
+    default Ent<K, V> putAll(PersistentMap<? extends K, ? extends V> map) {
+        requireNonNull(map,
+                       "map");
+        return fromImmutableMap(toImmutableMap().putAll(map));
+    }
+
+    default Ent<K, V> remove(K key) {
+
+        requireNonNull(key,
+                       "key");
+        return fromImmutableMap(toImmutableMap().remove(key));
+    }
+
+    default Ent<K, V> removeAll(K... keys) {
+
+        requireNonNull(keys,
+                       "keys");
+        return fromImmutableMap(toImmutableMap().removeAll(keys));
+    }
+
+    default List<K> keysList() {
+        return toImmutableMap().keys()
+                               .toList();
+    }
+
+    default ReactiveSeq<K> keys() {
+        return toImmutableMap().keys();
+    }
+
+    default List<V> valuesList() {
+        return toImmutableMap().values()
+                               .toList();
+    }
+
+    default ReactiveSeq<V> values() {
+        return toImmutableMap().values();
+    }
+
+    default Ent<K, V> removeAllKeys(Iterable<? extends K> keys) {
+        requireNonNull(keys,
+                       "keys");
+        return fromImmutableMap(toImmutableMap().removeAllKeys(keys));
+    }
+
+    default boolean containsValue(V value) {
+        requireNonNull(value,
+                       "value");
+        return toImmutableMap().containsValue(value);
+    }
+
+    default boolean isEmpty() {
+        return toImmutableMap().isEmpty();
+    }
+
+    default boolean containsKey(K key) {
+        requireNonNull(key,
+                       "key");
+        return toImmutableMap().containsKey(key);
+    }
+
+    default boolean contains(Tuple2<K, V> tuple) {
+        requireNonNull(tuple,
+                       "tuple");
+        return toImmutableMap().contains(tuple);
+    }
+
+    default int size() {
+        return toImmutableMap().size();
+    }
 
     /**
      * Testing Methods
      */
 
-    //    boolean allMatch(Predicate<? super Tuple2<K, V>> c);
-    //
-    //    boolean anyMatch(Predicate<? super Tuple2<K, V>> c);
-    //
-    //    boolean noneMatch(Predicate<? super Tuple2<K, V>> c);
+    default boolean allMatch(Predicate<? super Tuple2<K, V>> condition) {
+        requireNonNull(condition,
+                       "condition");
+        return toImmutableMap().allMatch(condition);
+    }
+
+    default boolean anyMatch(Predicate<? super Tuple2<K, V>> condition) {
+        requireNonNull(condition,
+                       "condition");
+        return toImmutableMap().anyMatch(condition);
+    }
+
+    default boolean noneMatch(Predicate<? super Tuple2<K, V>> condition) {
+        requireNonNull(condition,
+                       "condition");
+        return toImmutableMap().noneMatch(condition);
+    }
 
     /**
      * Fancy ForEach Comprehensions
@@ -466,7 +740,11 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     //    boolean startsWith(Iterable<Tuple2<K, V>> iterable);
     //
     //    boolean endsWith(Iterable<Tuple2<K, V>> iterable);
-    //
+
+    /**
+     * Sampling Methods
+     */
+
     //    Tuple2<K, V> firstValue(Tuple2<K, V> alt);
     //
     //    Tuple2<K, V> singleOrElse(Tuple2<K, V> alt);
@@ -492,4 +770,20 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     //
     //    boolean atMost(int num,
     //                   Predicate<? super Tuple2<K, V>> c);
+
+    static final class EntImpl<K, V> implements Ent<K, V> {
+
+        private final ImmutableMap<K, V> data;
+
+        public EntImpl(ImmutableMap<K, V> data) {
+            this.data = requireNonNull(data,
+                                       "data");
+        }
+
+        @Override
+        public ImmutableMap<K, V> toImmutableMap() {
+            return data;
+        }
+
+    }
 }

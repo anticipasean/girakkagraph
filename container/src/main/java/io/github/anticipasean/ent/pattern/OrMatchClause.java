@@ -4,11 +4,13 @@ import cyclops.control.Option;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public interface OrMatchClause<E, I, O> {
+public interface OrMatchClause<V, I, O> {
 
-    <I> OrMatchPredicate<E, I, O> ifOfType(Class<I> possibleType);
+    <I> OrMatchPredicate<V, I, O> ifOfType(Class<I> possibleType);
 
-    OrThenClause<E, E, O> ifFits(Predicate<E> condition);
+    <E> OrMatchIterablePredicate<V, E, O> ifIterableOver(Class<E> elementType);
+
+    OrThenClause<V, V, O> ifFits(Predicate<V> condition);
 
     Option<O> get();
 

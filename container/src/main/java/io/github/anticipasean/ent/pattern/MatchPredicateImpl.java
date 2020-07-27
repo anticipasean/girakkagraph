@@ -1,51 +1,46 @@
 package io.github.anticipasean.ent.pattern;
 
+import cyclops.companion.Streamable;
+import java.util.Iterator;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class MatchPredicateImpl<E, I> implements MatchPredicate<E, I> {
+public class MatchPredicateImpl<V, I> implements MatchPredicate<V, I> {
 
-    private final E eventObject;
-    private final Class<I> matchedClass;
+    private final V valueObject;
+    private final I valueAsInputType;
+    private final Iterator<I> valueAsIteratorOfInputType;
 
-    public MatchPredicateImpl(E eventObject,
-                              Class<I> matchedClass) {
-        this.eventObject = eventObject;
-        this.matchedClass = matchedClass;
+    public MatchPredicateImpl(V valueObject,
+                              I valueAsInputType,
+                              Iterator<I> valueAsIteratorOfInputType) {
+        this.valueObject = valueObject;
+        this.valueAsInputType = valueAsInputType;
+        this.valueAsIteratorOfInputType = valueAsIteratorOfInputType;
     }
 
     @Override
-    public ThenClause<E, I> and(Predicate<I> condition) {
-        PatternMatching.logger.info("if_match_and predicate: state: obj {}, matchedClass {}",
-                                    eventObject,
-                                    matchedClass);
-        if (matchedClass != null && Objects.nonNull(condition)) {
-            Optional<I> eventAsPossibleTypeMaybe = PatternMatching.tryDynamicCast(eventObject,
-                                                                                  matchedClass);
-            if (eventAsPossibleTypeMaybe.isPresent() && condition.test(eventAsPossibleTypeMaybe.get())) {
-                return new ThenClauseImpl<>(eventObject,
-                                            eventAsPossibleTypeMaybe.get());
-            }
+    public ThenClause<V, I> and(Predicate<I> condition) {
+        if (valueAsIteratorOfInputType != null && Objects.nonNull(condition) && condition.test(valueAsInputType)) {
+            return new ThenClauseImpl<>(valueObject,
+                                        valueAsInputType);
         }
-        return new ThenClauseImpl<>(eventObject,
+        return new ThenClauseImpl<>(valueObject,
                                     null);
     }
 
+
     @Override
-    public <O> OrMatchClause<E, I, O> then(Function<I, O> func) {
-        if (matchedClass != null) {
-            I matchedInput = PatternMatching.tryDynamicCast(eventObject,
-                                                            matchedClass).orElseThrow(() -> new RuntimeException(
-                "unable to " + "case " + "object" + " to " + "matched " + "type"));
-            O resultOutput = Objects.requireNonNull(func,
-                                                    () -> "functionForInput may not be null")
-                                    .apply(matchedInput);
-            return new OrMatchClauseImpl<E, I, O>(eventObject,
+    public <O> OrMatchClause<V, I, O> then(Function<I, O> mapper) {
+        if (valueAsInputType != null) {
+            O resultOutput = Objects.requireNonNull(mapper,
+                                                    () -> "mapper")
+                                    .apply(valueAsInputType);
+            return new OrMatchClauseImpl<V, I, O>(valueObject,
                                                   resultOutput);
         }
-        return new OrMatchClauseImpl<>(eventObject,
+        return new OrMatchClauseImpl<>(valueObject,
                                        null);
     }
 }

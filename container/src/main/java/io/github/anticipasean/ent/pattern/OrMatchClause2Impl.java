@@ -5,8 +5,10 @@ import static java.util.Objects.requireNonNull;
 
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -31,11 +33,57 @@ public class OrMatchClause2Impl<K, V, O> implements OrMatchClause2<K, V, O> {
                                                resultOutput);
         } else if (nonNull(condition) && condition.test(tuple._1()) && PatternMatching.isOfType(tuple._2(),
                                                                                                 possibleType)) {
-            Optional<I> valueAsMatchedTypeOpt = PatternMatching.tryDynamicCast(tuple._2(),
+            Option<I> valueAsMatchedTypeOpt = PatternMatching.tryDynamicCast(tuple._2(),
                                                                                possibleType);
             if (valueAsMatchedTypeOpt.isPresent()) {
                 return new OrMatchPredicate2Impl<>(tuple,
-                                                   valueAsMatchedTypeOpt.get(),
+                                                   valueAsMatchedTypeOpt.orElse(null),
+                                                   null);
+            }
+        }
+        return new OrMatchPredicate2Impl<>(tuple,
+                                           null,
+                                           null);
+
+    }
+
+    @Override
+    public <I> OrMatchPredicate2<K, V, I, O> ifKeyValueFitsAndValueOfType(BiPredicate<K, V> condition,
+                                                                          Class<I> possibleType) {
+        if (nonNull(resultOutput)) {
+            return new OrMatchPredicate2Impl<>(tuple,
+                                               null,
+                                               resultOutput);
+        } else if (nonNull(condition) && condition.test(tuple._1(),
+                                                        tuple._2()) && nonNull(possibleType)
+            && PatternMatching.isOfType(tuple._2(),
+                                        possibleType)) {
+            Option<I> valueAsMatchedTypeOpt = PatternMatching.tryDynamicCast(tuple._2(),
+                                                                               possibleType);
+            if (valueAsMatchedTypeOpt.isPresent()) {
+                return new OrMatchPredicate2Impl<>(tuple,
+                                                   valueAsMatchedTypeOpt.orElse(null),
+                                                   null);
+            }
+        }
+        return new OrMatchPredicate2Impl<>(tuple,
+                                           null,
+                                           null);
+    }
+
+    @Override
+    public <I> OrMatchPredicate2<K, V, I, O> ifValueOfType(Class<I> possibleType) {
+        if (nonNull(resultOutput)) {
+            return new OrMatchPredicate2Impl<>(tuple,
+                                               null,
+                                               resultOutput);
+        } else if (nonNull(possibleType) && PatternMatching.isOfType(tuple._2(),
+                                                                     possibleType)) {
+            Option<I> valueAsMatchedTypeOpt = PatternMatching.tryDynamicCast(tuple._2(),
+                                                                               possibleType);
+            if (valueAsMatchedTypeOpt.isPresent()) {
+                return new OrMatchPredicate2Impl<>(tuple,
+                                                   valueAsMatchedTypeOpt.orElse(null),
                                                    null);
             }
         }
@@ -64,23 +112,45 @@ public class OrMatchClause2Impl<K, V, O> implements OrMatchClause2<K, V, O> {
 
     @Override
     public Option<Tuple2<K, O>> get() {
-        return Option.ofNullable(resultOutput).fold(o -> Option.of(Tuple2.of(tuple._1(), o)), Option::none);
+        return Option.ofNullable(resultOutput)
+                     .fold(o -> Option.of(Tuple2.of(tuple._1(),
+                                                    o)),
+                           Option::none);
     }
 
     @Override
-    public Tuple2<K, O> orElse(O defaultOutput) {
-        return Option.ofNullable(resultOutput).fold(o -> Tuple2.of(tuple._1(), o), () -> Tuple2.of(tuple._1(), defaultOutput));
+    public Tuple2<K, O> orElse(O defaultValueOutput) {
+        return Option.ofNullable(resultOutput)
+                     .fold(o -> Tuple2.of(tuple._1(),
+                                          o),
+                           () -> Tuple2.of(tuple._1(),
+                                           defaultValueOutput));
     }
 
     @Override
-    public Tuple2<K, O> orElseGet(Supplier<O> defaultOutputSupplier) {
-        return Option.ofNullable(resultOutput).fold(o -> Tuple2.of(tuple._1(), o), () -> Tuple2.of(tuple._1(), defaultOutputSupplier.get()));
+    public Tuple2<K, O> orElseGet(Supplier<O> defaultValueOutputSupplier) {
+        return Option.ofNullable(resultOutput)
+                     .fold(o -> Tuple2.of(tuple._1(),
+                                          o),
+                           () -> Tuple2.of(tuple._1(),
+                                           defaultValueOutputSupplier.get()));
+    }
+
+    @Override
+    public Tuple2<K, O> orElseMap(Function<Tuple2<K, V>, Tuple2<K, O>> mapper) {
+        return Option.ofNullable(resultOutput)
+                     .fold(o -> Tuple2.of(tuple._1(),
+                                          o),
+                           () -> Objects.requireNonNull(mapper,
+                                                        "mapper")
+                                        .apply(tuple));
     }
 
     @Override
     public <X extends RuntimeException> Tuple2<K, O> orElseThrow(Supplier<X> throwableSupplier) {
         if (resultOutput != null) {
-            return Tuple2.of(tuple._1(), resultOutput);
+            return Tuple2.of(tuple._1(),
+                             resultOutput);
         }
         throw throwableSupplier.get();
     }

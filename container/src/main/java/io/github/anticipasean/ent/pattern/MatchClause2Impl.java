@@ -3,8 +3,8 @@ package io.github.anticipasean.ent.pattern;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNull;
 
+import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
-import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -22,11 +22,43 @@ public class MatchClause2Impl<K, V> implements MatchClause2<K, V> {
                                                                 Class<I> possibleType) {
         if (nonNull(condition) && condition.test(tuple._1()) && nonNull(possibleType) && PatternMatching.isOfType(tuple._2(),
                                                                                                                   possibleType)) {
-            Optional<I> valueAsMatchingTypeOpt = PatternMatching.tryDynamicCast(tuple._2(),
-                                                                                possibleType);
+            Option<I> valueAsMatchingTypeOpt = PatternMatching.tryDynamicCast(tuple._2(),
+                                                                              possibleType);
             if (valueAsMatchingTypeOpt.isPresent()) {
                 return new MatchPredicate2Impl<>(tuple,
-                                                 valueAsMatchingTypeOpt.get());
+                                                 valueAsMatchingTypeOpt.orElse(null));
+            }
+        }
+        return new MatchPredicate2Impl<>(tuple,
+                                         null);
+    }
+
+    @Override
+    public <I> MatchPredicate2<K, V, I> ifKeyValueFitsAndValueOfType(BiPredicate<K, V> condition,
+                                                                     Class<I> possibleType) {
+        if (nonNull(condition) && condition.test(tuple._1(),
+                                                 tuple._2()) && nonNull(possibleType) && PatternMatching.isOfType(tuple._2(),
+                                                                                                                  possibleType)) {
+            Option<I> valueAsMatchingTypeOpt = PatternMatching.tryDynamicCast(tuple._2(),
+                                                                              possibleType);
+            if (valueAsMatchingTypeOpt.isPresent()) {
+                return new MatchPredicate2Impl<>(tuple,
+                                                 valueAsMatchingTypeOpt.orElse(null));
+            }
+        }
+        return new MatchPredicate2Impl<>(tuple,
+                                         null);
+    }
+
+    @Override
+    public <I> MatchPredicate2<K, V, I> ifValueOfType(Class<I> possibleType) {
+        if (nonNull(possibleType) && PatternMatching.isOfType(tuple._2(),
+                                                              possibleType)) {
+            Option<I> valueAsMatchingTypeOpt = PatternMatching.tryDynamicCast(tuple._2(),
+                                                                              possibleType);
+            if (valueAsMatchingTypeOpt.isPresent()) {
+                return new MatchPredicate2Impl<>(tuple,
+                                                 valueAsMatchingTypeOpt.orElse(null));
             }
         }
         return new MatchPredicate2Impl<>(tuple,

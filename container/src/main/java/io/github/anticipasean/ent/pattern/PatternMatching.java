@@ -1,8 +1,8 @@
 package io.github.anticipasean.ent.pattern;
 
+import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -48,18 +48,23 @@ public interface PatternMatching {
             && returnType.isInstance(inputObject)));
     }
 
-    static <I, R> Optional<R> tryDynamicCast(I inputObject,
-                                             Class<R> returnType) {
+
+    static <I, R> Option<R> tryDynamicCast(I inputObject,
+                                           Class<R> returnType) {
         try {
-            return Optional.of(inputObject)
-                           .map(input -> Objects.requireNonNull(returnType,
-                                                                () -> "returnType specified may not be null for dynamic casting")
-                                                .cast(input));
+            return Option.ofNullable(inputObject)
+                         .map(input -> Objects.requireNonNull(returnType,
+                                                              () -> "returnType")
+                                              .cast(input));
         } catch (ClassCastException e) {
-            return Optional.empty();
+            return Option.none();
         }
     }
 
+
+    static <U, T extends U> U narrowType(T object) {
+        return (U) object;
+    }
 }
 
 

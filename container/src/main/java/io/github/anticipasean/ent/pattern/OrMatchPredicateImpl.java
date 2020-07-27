@@ -1,62 +1,51 @@
 package io.github.anticipasean.ent.pattern;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class OrMatchPredicateImpl<E, I, O> implements OrMatchPredicate<E, I, O> {
+public class OrMatchPredicateImpl<V, I, O> implements OrMatchPredicate<V, I, O> {
 
-    private final E eventObject;
-    private final Class<I> matchedClass;
+    private final V valueObject;
+    private final I valueAsInputType;
     private final O resultOutput;
 
-    public OrMatchPredicateImpl(E eventObject,
-                                Class<I> matchedClass,
+    public OrMatchPredicateImpl(V valueObject,
+                                I valueAsInputType,
                                 O resultOutput) {
-        this.eventObject = eventObject;
-        this.matchedClass = matchedClass;
+        this.valueObject = valueObject;
+        this.valueAsInputType = valueAsInputType;
         this.resultOutput = resultOutput;
     }
 
     @Override
-    public OrThenClause<E, I, O> and(Predicate<I> condition) {
-        PatternMatching.logger.info("if_not_match_and predicate: state: obj {}, matchedClass {}, resultObj {}",
-                                    eventObject,
-                                    matchedClass,
-                                    resultOutput);
+    public OrThenClause<V, I, O> and(Predicate<I> condition) {
         if (resultOutput != null) {
-            return new OrThenClauseImpl<E, I, O>(eventObject,
+            return new OrThenClauseImpl<V, I, O>(valueObject,
                                                  null,
                                                  resultOutput);
         }
-        if (matchedClass != null && Objects.nonNull(condition)) {
-            Optional<I> eventAsPossibleTypeMaybe = PatternMatching.tryDynamicCast(eventObject,
-                                                                                  matchedClass);
-            if (eventAsPossibleTypeMaybe.isPresent() && condition.test(eventAsPossibleTypeMaybe.get())) {
-                return new OrThenClauseImpl<>(eventObject,
-                                              eventAsPossibleTypeMaybe.get(),
-                                              null);
-            }
+        if (valueAsInputType != null && Objects.nonNull(condition) && condition.test(valueAsInputType)) {
+            return new OrThenClauseImpl<>(valueObject,
+                                          valueAsInputType,
+                                          null);
         }
-        return new OrThenClauseImpl<>(eventObject, null, null);
+        return new OrThenClauseImpl<>(valueObject,
+                                      null,
+                                      null);
     }
 
     @Override
-    public OrMatchClause<E, I, O> then(Function<I, O> func) {
+    public OrMatchClause<V, I, O> then(Function<I, O> mapper) {
         if (resultOutput != null) {
-            return new OrMatchClauseImpl<>(eventObject,
+            return new OrMatchClauseImpl<>(valueObject,
                                            resultOutput);
         }
-        if (matchedClass != null) {
-            Optional<I> matchedInput = PatternMatching.tryDynamicCast(eventObject,
-                                                                      matchedClass);
-            if (matchedInput.isPresent()) {
-                return new OrMatchClauseImpl<>(eventObject,
-                                               func.apply(matchedInput.get()));
-            }
+        if (valueAsInputType != null && Objects.nonNull(mapper)) {
+            return new OrMatchClauseImpl<>(valueObject,
+                                           mapper.apply(valueAsInputType));
         }
-        return new OrMatchClauseImpl<>(eventObject,
+        return new OrMatchClauseImpl<>(valueObject,
                                        null);
     }
 }

@@ -11,3 +11,17 @@ idea {
         targetCompatibility = javaVersion
     }
 }
+
+dependencies {
+    implementation 'com.google.guava:guava:21.0'
+    testImplementation 'com.google.guava:guava:21.0'
+}
+
+configurations.all.each { Configuration conf ->
+    conf.exclude(group: 'org.junit.jupiter')
+}
+
+test {
+    useTestNG()
+//    systemProperty 'java.util.logging.manager', 'org.apache.logging.log4j.LogManager'
+}
