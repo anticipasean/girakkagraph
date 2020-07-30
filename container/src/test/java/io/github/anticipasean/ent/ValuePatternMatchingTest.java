@@ -1,6 +1,7 @@
 package io.github.anticipasean.ent;
 
 import cyclops.data.tuple.Tuple2;
+import io.github.anticipasean.ent.func.Matcher;
 import io.github.anticipasean.ent.pattern.PatternMatching;
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -144,4 +145,17 @@ public class ValuePatternMatchingTest {
                             (Integer) 1);
     }
 
+    @Test
+    public void functionalMatcherTest() {
+
+        BigDecimal bigDec = Matcher.patternForValue(40)
+                                   .ifOfType(BigDecimal.class)
+                                   .then(bigDecimal -> BigDecimal.TEN)
+                                   .ifOfType(Float.class)
+                                   .then(aFloat -> BigDecimal.valueOf(2.2))
+                                   .ifOfType(Integer.class)
+                                   .then(integer -> BigDecimal.valueOf(integer))
+                                   .orElse(BigDecimal.ONE);
+        Assert.assertEquals(bigDec, BigDecimal.valueOf(40));
+    }
 }
