@@ -4,6 +4,7 @@ import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -93,25 +94,50 @@ public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
                                                                                                                     Option.none())))));
     }
 
+    default <I> OrThenClause1<V, I, O> mapsTo(Function<V, Option<I>> mapper) {
+        return OrThenClause1.of(() -> MatchResult.of(subject().either()
+                                                              .mapLeft(tuple -> tuple.first()
+                                                                                     .map(mapper)
+                                                                                     ._1())
+                                                              .mapLeft(iOpt -> Tuple2.of(subject().either()
+                                                                                                  .leftOrElse(null)
+                                                                                                  ._1(),
+                                                                                         iOpt))));
+    }
+
+    default <I> OrThenClause1<V, I, O> mapsToAnd(Function<V, Option<I>> mapper,
+                                                 Predicate<I> condition) {
+        return OrThenClause1.of(() -> MatchResult.of(subject().either()
+                                                              .mapLeft(tuple -> tuple.first()
+                                                                                     .map(mapper)
+                                                                                     ._1()
+                                                                                     .filter(condition))
+                                                              .mapLeft(iOpt -> Tuple2.of(subject().either()
+                                                                                                  .leftOrElse(null)
+                                                                                                  ._1(),
+                                                                                         iOpt))));
+    }
+
+
     default Option<O> yield() {
         return subject().either()
                         .fold(o -> Option.some(o),
                               () -> Option.none());
     }
 
-    default O orElse(O defaultOutput) {
+    default O elseDefault(O defaultOutput) {
         return subject().either()
                         .fold(o -> o,
                               () -> defaultOutput);
     }
 
-    default O orElseGet(Supplier<O> defaultOutputSupplier) {
+    default O elseGet(Supplier<O> defaultOutputSupplier) {
         return subject().either()
                         .fold(o -> o,
                               defaultOutputSupplier);
     }
 
-    default <X extends RuntimeException> O orElseThrow(Supplier<X> throwableSupplier) {
+    default <X extends RuntimeException> O elseThrow(Supplier<X> throwableSupplier) {
         if (subject().either()
                      .isRight()) {
             return subject().either()

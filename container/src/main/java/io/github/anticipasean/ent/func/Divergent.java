@@ -4,6 +4,7 @@ import cyclops.control.Option;
 import cyclops.data.tuple.Tuple1;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import org.slf4j.LoggerFactory;
 
 public interface Divergent {
 
@@ -24,6 +25,7 @@ public interface Divergent {
                          .map(returnType::cast)
                          .fold(Option::some);
         } catch (ClassCastException e) {
+            LoggerFactory.getLogger(Divergent.class).error("class_cast_exception: ", e);
             return Option.none();
         }
     }

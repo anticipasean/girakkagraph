@@ -4,6 +4,7 @@ import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.slf4j.LoggerFactory;
 
 public interface ThenClause1<V, I> extends Clause1<Tuple2<V, Option<I>>> {
 
@@ -17,6 +18,7 @@ public interface ThenClause1<V, I> extends Clause1<Tuple2<V, Option<I>>> {
     }
 
     default <O> OrMatchClause1<V, I, O> then(Function<I, O> mapper) {
+        LoggerFactory.getLogger(ThenClause1.class).info("current_state: " + subject().toString());
         return OrMatchClause1.of(() -> MatchResult.of(subject().map2(inputTypeAsOpt -> inputTypeAsOpt.map(mapper)
                                                                                                  .toEither(Tuple2.of(subject()._1(),
                                                                                                                     Option.<I>none())))

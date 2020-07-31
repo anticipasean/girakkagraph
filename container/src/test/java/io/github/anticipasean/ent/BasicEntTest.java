@@ -27,13 +27,14 @@ public class BasicEntTest {
                             Ent.of("blah",
                                    2)
                                .matchGet("blah",
-                                         integerIfMatchClause -> integerIfMatchClause.isOfType(BigDecimal.class)
-                                                                                     .then(bigDecimal -> "one_big_dec")
-                                                                                     .isOfType(Float.class)
-                                                                                     .then(aFloat -> "two_float")
-                                                                                     .isOfType(Integer.class)
-                                                                                     .then(integer -> "two_int")
-                                                                                     .orElse("no match"))
+                                         matcher -> matcher.caseWhenValue()
+                                                           .isOfType(BigDecimal.class)
+                                                           .then(bigDecimal -> "one_big_dec")
+                                                           .isOfType(Float.class)
+                                                           .then(aFloat -> "two_float")
+                                                           .isOfType(Integer.class)
+                                                           .then(integer -> "two_int")
+                                                           .elseDefault("no match"))
                                .orElse("key not found"));
     }
     //

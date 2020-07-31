@@ -157,8 +157,9 @@ public class ValuePatternMatchingTest {
                                    .then(integer -> BigDecimal.valueOf(integer))
                                    .isOfType(Float.class)
                                    .then(aFloat -> BigDecimal.valueOf(2.2))
-                                   .orElse(BigDecimal.ONE);
-        Assert.assertEquals(bigDec, BigDecimal.valueOf(40));
+                                   .elseDefault(BigDecimal.ONE);
+        Assert.assertEquals(bigDec,
+                            BigDecimal.valueOf(40));
     }
 
     @Test
@@ -171,8 +172,9 @@ public class ValuePatternMatchingTest {
                                    .then(integer -> BigDecimal.valueOf(integer))
                                    .isOfType(Float.class)
                                    .then(aFloat -> BigDecimal.valueOf(2.2))
-                                   .orElse(BigDecimal.ONE);
-        Assert.assertEquals(bigDec, BigDecimal.ONE);
+                                   .elseDefault(BigDecimal.ONE);
+        Assert.assertEquals(bigDec,
+                            BigDecimal.ONE);
     }
 
     @Test
@@ -202,4 +204,40 @@ public class ValuePatternMatchingTest {
                                            .yield();
         Assert.assertFalse(bigDec.isPresent());
     }
+
+    //    @Test
+    //    public void functionalMatchIsSameTypeAsPositiveTest() {
+    //        String resultStr = Matcher.caseWhen(Tuple2.of("blah",
+    //                                              "la"))
+    //                          .isSameTypeAs(Tuple2.of(1,
+    //                                                  2))
+    //                          .then(integerIntegerTuple2 -> integerIntegerTuple2.toString())
+    //                          .isSameTypeAs(Tuple2.of("re",
+    //                                                  "rah"))
+    //                          .then(stringStringTuple2 -> stringStringTuple2.toString())
+    //                          .isSameTypeAs(Tuple2.of(12.23f,
+    //                                                  1.2f))
+    //                          .then(floatFloatTuple2 -> floatFloatTuple2.toString())
+    //                          .orElse("No match");
+    //        logger.info(HashMap.of("actual", resultStr, "expected", Tuple2.of("blah", "la").toString()).mkString());
+    //        Assert.assertEquals(Tuple2.of("blah", "la").toString(), resultStr);
+    //    }
+    //
+    //    @Test
+    //    public void functionalMatchIsSameTypeAsNegativeTest() {
+    //        String resultStr = Matcher.caseWhen(Tuple2.of("blah",
+    //                                                      2))
+    //                                  .isSameTypeAs(Tuple2.of(1,
+    //                                                          2))
+    //                                  .then(integerIntegerTuple2 -> integerIntegerTuple2.toString())
+    //                                  .isSameTypeAs(Tuple2.of("re",
+    //                                                          "rah"))
+    //                                  .then(stringStringTuple2 -> stringStringTuple2.toString())
+    //                                  .isSameTypeAs(Tuple2.of(12.23f,
+    //                                                          1.2f))
+    //                                  .then(floatFloatTuple2 -> floatFloatTuple2.toString())
+    //                                  .orElse("No match");
+    //        logger.info(HashMap.of("actual", resultStr, "expected", "No match").mkString());
+    //        Assert.assertEquals(resultStr, "No match");
+    //    }
 }

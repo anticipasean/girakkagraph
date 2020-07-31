@@ -4,6 +4,7 @@ import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -36,8 +37,8 @@ public interface MatchClause1<V> extends Clause1<V> {
                                                                 Option.none())));
     }
 
-    default <I> ThenClause1<V, I> isOfTypeAndFits(Class<I> possibleType,
-                                                  Predicate<? super I> condition) {
+    default <I> ThenClause1<V, I> isOfTypeAnd(Class<I> possibleType,
+                                              Predicate<? super I> condition) {
         return ThenClause1.of(() -> Option.of(subject())
                                           .flatMap(inputTypeMapper(possibleType))
                                           .filter(condition)
@@ -84,6 +85,25 @@ public interface MatchClause1<V> extends Clause1<V> {
                                                                                 Option.some((Iterable<E>) streamable::iterator)),
                                                         () -> Tuple2.of(subject(),
                                                                         Option.none())));
+    }
+
+    default <I> ThenClause1<V, I> mapsTo(Function<V, Option<I>> extractor) {
+        return ThenClause1.of(() -> Option.of(subject())
+                                          .map(extractor)
+                                          .fold(iOpt -> Tuple2.of(subject(),
+                                                                  iOpt),
+                                                () -> Tuple2.of(subject(),
+                                                                Option.none())));
+    }
+
+    default <I> ThenClause1<V, I> mapsToAnd(Function<V, Option<I>> extractor,
+                                            Predicate<I> condition) {
+        return ThenClause1.of(() -> Option.of(subject())
+                                          .map(extractor)
+                                          .fold(iOpt -> Tuple2.of(subject(),
+                                                                  iOpt.filter(condition)),
+                                                () -> Tuple2.of(subject(),
+                                                                Option.none())));
     }
 
 }

@@ -82,7 +82,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     default <R> Option<R> matchGet(K key,
                                    Pattern1<V, R> valuePattern) {
         return toImmutableMap().get(key)
-                               .map(Pattern1.mapper(valuePattern));
+                               .map(Pattern1.asMapper(valuePattern));
     }
 
 //    default <R> Option<Tuple2<K, R>> matchGet(K key,
@@ -116,7 +116,6 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     default <R> Stream<Tuple2<K, R>> matchMapToJavaUtilStream(ValuePattern<V, R> valuePattern) {
         requireNonNull(valuePattern,
                        "valuePattern");
-        boolean PARALLEL = true;
         return StreamSupport.stream(toImmutableMap().map(ValuePattern.mapper(valuePattern))
                                                     .stream()
                                                     .spliterator(),

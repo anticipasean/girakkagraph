@@ -4,6 +4,7 @@ import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.slf4j.LoggerFactory;
 
 public interface OrThenClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
 
@@ -17,6 +18,7 @@ public interface OrThenClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
     }
 
     default OrMatchClause1<V, I, O> then(Function<I, O> mapper) {
+        LoggerFactory.getLogger(OrThenClause1.class).info("current_state: " + subject().either().toString());
         return OrMatchClause1.of(() -> MatchResult.of(subject().either()
                                                            .mapLeft(Tuple2::_2)
                                                            .mapLeft(valueAsInputTypeOpt -> valueAsInputTypeOpt.map(mapper))
