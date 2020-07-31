@@ -11,6 +11,7 @@ import cyclops.data.TreeMap;
 import cyclops.data.tuple.Tuple2;
 import cyclops.function.Reducer;
 import cyclops.reactive.ReactiveSeq;
+import io.github.anticipasean.ent.func.Pattern1;
 import io.github.anticipasean.ent.pattern.KeyValuePattern;
 import io.github.anticipasean.ent.pattern.ValuePattern;
 import java.util.Comparator;
@@ -79,19 +80,19 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      */
 
     default <R> Option<R> matchGet(K key,
-                                   ValuePattern<V, R> valuePattern) {
+                                   Pattern1<V, R> valuePattern) {
         return toImmutableMap().get(key)
-                               .map(ValuePattern.mapper(valuePattern));
+                               .map(Pattern1.mapper(valuePattern));
     }
 
-    default <R> Option<Tuple2<K, R>> matchGet(K key,
-                                              KeyValuePattern<K, V, R> keyValuePattern) {
-        return toImmutableMap().get(key)
-                               .fold(v -> Option.of(Tuple2.of(key,
-                                                              v))
-                                                .map(KeyValuePattern.tupleMapper(keyValuePattern)),
-                                     Option::none);
-    }
+//    default <R> Option<Tuple2<K, R>> matchGet(K key,
+//                                              KeyValuePattern<K, V, R> keyValuePattern) {
+//        return toImmutableMap().get(key)
+//                               .fold(v -> Option.of(Tuple2.of(key,
+//                                                              v))
+//                                                .map(KeyValuePattern.tupleMapper(keyValuePattern)),
+//                                     Option::none);
+//    }
 
     default <R> Ent<K, R> matchMap(ValuePattern<V, R> valuePattern) {
         return fromImmutableMap(toImmutableMap().map(ValuePattern.mapper(valuePattern)));

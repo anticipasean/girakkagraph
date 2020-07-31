@@ -1,9 +1,11 @@
 package io.github.anticipasean.ent;
 
+import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.func.Matcher;
 import io.github.anticipasean.ent.pattern.PatternMatching;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -146,16 +148,58 @@ public class ValuePatternMatchingTest {
     }
 
     @Test
-    public void functionalMatcherTest() {
+    public void functionalMatcherPositiveTest() {
 
-        BigDecimal bigDec = Matcher.patternForValue(40)
-                                   .ifOfType(BigDecimal.class)
+        BigDecimal bigDec = Matcher.caseWhen(40)
+                                   .isOfType(BigDecimal.class)
                                    .then(bigDecimal -> BigDecimal.TEN)
-                                   .ifOfType(Float.class)
-                                   .then(aFloat -> BigDecimal.valueOf(2.2))
-                                   .ifOfType(Integer.class)
+                                   .isOfType(Integer.class)
                                    .then(integer -> BigDecimal.valueOf(integer))
+                                   .isOfType(Float.class)
+                                   .then(aFloat -> BigDecimal.valueOf(2.2))
                                    .orElse(BigDecimal.ONE);
         Assert.assertEquals(bigDec, BigDecimal.valueOf(40));
+    }
+
+    @Test
+    public void functionalMatcherNegativeTest() {
+
+        BigDecimal bigDec = Matcher.caseWhen(BigInteger.valueOf(20))
+                                   .isOfType(BigDecimal.class)
+                                   .then(bigDecimal -> BigDecimal.TEN)
+                                   .isOfType(Integer.class)
+                                   .then(integer -> BigDecimal.valueOf(integer))
+                                   .isOfType(Float.class)
+                                   .then(aFloat -> BigDecimal.valueOf(2.2))
+                                   .orElse(BigDecimal.ONE);
+        Assert.assertEquals(bigDec, BigDecimal.ONE);
+    }
+
+    @Test
+    public void functionalMatcherPositiveOptionTest() {
+
+        Option<BigDecimal> bigDec = Matcher.caseWhen(40)
+                                           .isOfType(BigDecimal.class)
+                                           .then(bigDecimal -> BigDecimal.TEN)
+                                           .isOfType(Integer.class)
+                                           .then(integer -> BigDecimal.valueOf(integer))
+                                           .isOfType(Float.class)
+                                           .then(aFloat -> BigDecimal.valueOf(2.2))
+                                           .yield();
+        Assert.assertTrue(bigDec.isPresent());
+    }
+
+    @Test
+    public void functionalMatcherNegativeOptionTest() {
+
+        Option<BigDecimal> bigDec = Matcher.caseWhen(BigInteger.valueOf(20))
+                                           .isOfType(BigDecimal.class)
+                                           .then(bigDecimal -> BigDecimal.TEN)
+                                           .isOfType(Integer.class)
+                                           .then(integer -> BigDecimal.valueOf(integer))
+                                           .isOfType(Float.class)
+                                           .then(aFloat -> BigDecimal.valueOf(2.2))
+                                           .yield();
+        Assert.assertFalse(bigDec.isPresent());
     }
 }

@@ -23,12 +23,14 @@ public class TypeCheckingIterator<T, E> implements Iterator<E> {
 
     @Override
     public boolean hasNext() {
-        while (!next.isPresent() && iteratorOfUnknownType.hasNext()) {
+        if (!next.isPresent() && iteratorOfUnknownType.hasNext()) {
             final T candidate = iteratorOfUnknownType.next();
             if (PatternMatching.isOfType(candidate,
                                          elementType)) {
                 next = PatternMatching.tryDynamicCast(candidate,
                                                       elementType);
+            } else {
+                return false;
             }
         }
         return next.isPresent();
