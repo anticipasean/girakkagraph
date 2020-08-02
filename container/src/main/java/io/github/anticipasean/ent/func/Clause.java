@@ -1,8 +1,8 @@
 package io.github.anticipasean.ent.func;
 
-import cyclops.function.Function0;
+import java.util.function.Supplier;
 
-public interface Clause<S> extends Function0<S>, Divergent {
+public interface Clause<S> extends Supplier<S>, VariantMappable {
 
     default S subject() {
         return get();

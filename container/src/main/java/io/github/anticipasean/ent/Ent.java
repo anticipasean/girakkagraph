@@ -11,7 +11,7 @@ import cyclops.data.TreeMap;
 import cyclops.data.tuple.Tuple2;
 import cyclops.function.Reducer;
 import cyclops.reactive.ReactiveSeq;
-import io.github.anticipasean.ent.func.Pattern1;
+import io.github.anticipasean.ent.func.single.Pattern1;
 import io.github.anticipasean.ent.pattern.KeyValuePattern;
 import io.github.anticipasean.ent.pattern.ValuePattern;
 import java.util.Comparator;

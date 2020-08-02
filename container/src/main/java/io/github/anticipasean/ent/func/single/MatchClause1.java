@@ -1,14 +1,15 @@
-package io.github.anticipasean.ent.func;
+package io.github.anticipasean.ent.func.single;
 
 import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
+import io.github.anticipasean.ent.func.Clause;
 import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public interface MatchClause1<V> extends Clause1<V> {
+public interface MatchClause1<V> extends Clause<V> {
 
     static <V> MatchClause1<V> of(Supplier<V> valueSupplier) {
         return new MatchClause1<V>() {

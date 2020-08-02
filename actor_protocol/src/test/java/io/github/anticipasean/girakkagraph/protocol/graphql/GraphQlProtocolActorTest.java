@@ -5,7 +5,7 @@ import io.github.anticipasean.girakkagraph.protocol.base.command.Command;
 import com.typesafe.config.ConfigFactory;
 
 import java.io.File;
-import org.junit.jupiter.api.Test;
+import org.testng.annotations.Test;
 
 public class GraphQlProtocolActorTest {
   ActorSystem<Command> actorSystem;

@@ -6,7 +6,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import org.slf4j.LoggerFactory;
 
-public interface Divergent {
+public interface VariantMappable {
 
     default <I, R> boolean isOfType(I inputObject,
                                    Class<R> returnType) {
@@ -25,7 +25,7 @@ public interface Divergent {
                          .map(returnType::cast)
                          .fold(Option::some);
         } catch (ClassCastException e) {
-            LoggerFactory.getLogger(Divergent.class).error("class_cast_exception: ", e);
+            LoggerFactory.getLogger(VariantMappable.class).error("class_cast_exception: ", e);
             return Option.none();
         }
     }

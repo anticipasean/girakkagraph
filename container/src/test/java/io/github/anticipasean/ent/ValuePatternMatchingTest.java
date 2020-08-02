@@ -32,24 +32,22 @@ public class ValuePatternMatchingTest {
     }
 
     @Test
-    public void ifKeyFitsAndValueOfTypeConditionTest() {
+    public void keyFitsConditionTest() {
         Number numberFive = Integer.valueOf(5);
-        Tuple2<String, String> patternMatchingResult = PatternMatching.forKeyValuePair("five",
-                                                                                       numberFive)
-                                                                      .ifKeyFitsAndValueOfType(s -> s.equalsIgnoreCase("one-half"),
-                                                                                               Double.class)
-                                                                      .andValueFits(aDouble -> aDouble.compareTo(0.5D) == 0)
-                                                                      .then((s, aDouble) -> "0.5")
-                                                                      .ifKeyFitsAndValueOfType(s -> "five".equalsIgnoreCase(s),
-                                                                                               BigDecimal.class)
-                                                                      .and(bigDecForm -> BigDecimal.valueOf(5.0000D)
-                                                                                                   .equals(bigDecForm))
-                                                                      .then((s, bigDecimalForm) -> "5.0000")
-                                                                      .ifKeyFitsAndValueOfType(s -> "five".equalsIgnoreCase(s),
-                                                                                               Integer.class)
-                                                                      .and(integer -> 5 == integer)
-                                                                      .then((s, integerForm) -> "5")
-                                                                      .orElse("No Match");
+        Tuple2<String, String> patternMatchingResult = Matcher.caseWhen("five",
+                                                                        numberFive)
+                                                              .valueOfTypeAndBothFit(Double.class, (s, vDoubl) -> s.equalsIgnoreCase("one-half") &&  vDoubl.compareTo(0.5D) == 0)
+                                                              .then((s, aDouble) -> Tuple2.of(s, "0.5"))
+                                                              .keyFits(s -> "five".equalsIgnoreCase(s),
+                                                                       BigDecimal.class)
+                                                              .and(bigDecForm -> BigDecimal.valueOf(5.0000D)
+                                                                                           .equals(bigDecForm))
+                                                              .then((s, bigDecimalForm) -> "5.0000")
+                                                              .keyFitsAn(s -> "five".equalsIgnoreCase(s),
+                                                                       Integer.class)
+                                                              .and(integer -> 5 == integer)
+                                                              .then((s, integerForm) -> "5")
+                                                              .orElse("No Match");
         logger.info("pattern_matching_result: [ value expected: {} as {}, actual: {} as {} ]",
                     "5",
                     String.class,
@@ -65,26 +63,24 @@ public class ValuePatternMatchingTest {
     @Test
     public void ifKeyValuePairFitsConditionTest() {
         Number numberFive = Integer.valueOf(5);
-        Tuple2<String, String> patternMatchingResult = PatternMatching.forKeyValuePair("five",
-                                                                                       numberFive)
-                                                                      .ifKeyValueFits((s, number) -> "one-half".equals(s)
-                                                                          && 0.5D == number.doubleValue())
-                                                                      .then((s, aDouble) -> Tuple2.of(s,
-                                                                                                      "0.5"))
-                                                                      .ifKeyValueFits((s, number) -> "precise 5".equals(s)
-                                                                          && BigDecimal.valueOf(5.000D)
-                                                                                       .equals(number))
-                                                                      .then((s, number) -> Tuple2.of(s,
-                                                                                                     BigDecimal.valueOf(5.0000D)
-                                                                                                               .toEngineeringString()))
-                                                                      .ifKeyValueFits((s, number) -> "five".equals(s)
-                                                                          && 5 == number.intValue())
-                                                                      .then((s, number) -> Tuple2.of(s,
-                                                                                                     Integer.valueOf(5)
-                                                                                                            .toString()))
-                                                                      .orElse(Tuple2.of("noMatch",
-                                                                                        "noMatch"))
-                                                                      .fold((s, stringStringTuple2) -> stringStringTuple2);
+        Tuple2<String, String> patternMatchingResult = Matcher.caseWhen("five",
+                                                                        numberFive)
+                                                              .bothFit((s, number) -> "one-half".equals(s)
+                                                                  && 0.5D == number.doubleValue())
+                                                              .then((s, aDouble) -> Tuple2.of(s,
+                                                                                              "0.5"))
+                                                              .bothFit((s, number) -> "precise 5".equals(s)
+                                                                  && BigDecimal.valueOf(5.000D)
+                                                                               .equals(number))
+                                                              .then((s, number) -> Tuple2.of(s,
+                                                                                             BigDecimal.valueOf(5.0000D)
+                                                                                                       .toEngineeringString()))
+                                                              .bothFit((s, number) -> "five".equals(s) && 5 == number.intValue())
+                                                              .then((s, number) -> Tuple2.of(s,
+                                                                                             Integer.valueOf(5)
+                                                                                                    .toString()))
+                                                              .elseDefault(Tuple2.of("noMatch",
+                                                                                     "noMatch"));
         logger.info("pattern_matching_result: [ expected: {} as {}, actual: {} as {} ]",
                     Tuple2.of("five",
                               "5"),
@@ -103,18 +99,18 @@ public class ValuePatternMatchingTest {
         Set<Integer> set = new HashSet<Integer>();
         set.add(1);
         Object setObject = set;
-        Supplier<Number> numberSupplierResult = PatternMatching.forValue(setObject)
-                                                               .ifIterableOver(Float.class)
-                                                               .and(floats -> floats.allMatch(aFloat -> aFloat > 1.0f))
-                                                               .then(floats -> (Supplier<Number>) () -> floats.findFirst()
-                                                                                                              .orElse(2.0F))
-                                                               .ifIterableOver(BigDecimal.class)
-                                                               .then(bigDecimals -> () -> bigDecimals.max(BigDecimal::compareTo)
-                                                                                                     .orElse(BigDecimal.TEN))
-                                                               .ifIterableOver(Integer.class)
-                                                               .then(integers -> () -> integers.findFirst()
-                                                                                               .orElse(7))
-                                                               .orElse(() -> 8);
+        Supplier<Number> numberSupplierResult = Matcher.caseWhen(setObject)
+                                                       .isIterableOverAnd(Float.class,
+                                                                          floats -> floats.allMatch(aFloat -> aFloat > 1.0f))
+                                                       .then(floats -> (Supplier<Number>) () -> floats.findFirst()
+                                                                                                      .orElse(2.0F))
+                                                       .isIterableOver(BigDecimal.class)
+                                                       .then(bigDecimals -> () -> bigDecimals.max(BigDecimal::compareTo)
+                                                                                             .orElse(BigDecimal.TEN))
+                                                       .isIterableOver(Integer.class)
+                                                       .then(integers -> () -> integers.findFirst()
+                                                                                       .orElse(7))
+                                                       .elseDefault(() -> 8);
         Assert.assertEquals(numberSupplierResult.get(),
                             (Integer) 1);
     }
@@ -124,25 +120,25 @@ public class ValuePatternMatchingTest {
         Set<Integer> set = new HashSet<Integer>();
         set.add(1);
         Object setObject = set;
-        Supplier<Number> numberSupplierResult = PatternMatching.forValue(setObject)
-                                                               .ifIterableOver(Float.class)
-                                                               .and(floats -> floats.allMatch(aFloat -> aFloat > 1.0f))
-                                                               .then(floats -> (Supplier<Number>) () -> floats.findFirst()
-                                                                                                              .orElse(2.0F))
-                                                               .ifIterableOver(BigDecimal.class)
-                                                               .then(bigDecimals -> () -> bigDecimals.max(BigDecimal::compareTo)
-                                                                                                     .orElse(BigDecimal.TEN))
-                                                               .ifIterableOver(Integer.class)
-                                                               .and(integers -> integers.findFirst()
-                                                                                        .orElse(-1) == 40)
-                                                               .then(integers -> () -> integers.findFirst()
-                                                                                               .orElse(7))
-                                                               .ifIterableOver(Integer.class)
-                                                               .and(integers -> integers.findFirst()
-                                                                                        .orElse(-1) == 1)
-                                                               .then(integers -> () -> integers.findFirst()
-                                                                                               .orElse(-1))
-                                                               .orElse(() -> 8);
+        Supplier<Number> numberSupplierResult = Matcher.caseWhen(setObject)
+                                                       .isIterableOverAnd(Float.class,
+                                                                          floats -> floats.allMatch(aFloat -> aFloat > 1.0f))
+                                                       .then(floats -> (Supplier<Number>) () -> floats.findFirst()
+                                                                                                      .orElse(2.0F))
+                                                       .isIterableOver(BigDecimal.class)
+                                                       .then(bigDecimals -> () -> bigDecimals.max(BigDecimal::compareTo)
+                                                                                             .orElse(BigDecimal.TEN))
+                                                       .isIterableOverAnd(Integer.class,
+                                                                          integers -> integers.findFirst()
+                                                                                              .orElse(-1) == 40)
+                                                       .then(integers -> () -> integers.findFirst()
+                                                                                       .orElse(7))
+                                                       .isIterableOverAnd(Integer.class,
+                                                                          integers -> integers.findFirst()
+                                                                                              .orElse(-1) == 1)
+                                                       .then(integers -> () -> integers.findFirst()
+                                                                                       .orElse(-1))
+                                                       .elseDefault(() -> 8);
         Assert.assertEquals(numberSupplierResult.get(),
                             (Integer) 1);
     }

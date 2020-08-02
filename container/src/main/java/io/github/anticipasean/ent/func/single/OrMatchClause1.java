@@ -1,27 +1,28 @@
-package io.github.anticipasean.ent.func;
+package io.github.anticipasean.ent.func.single;
 
 import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
+import io.github.anticipasean.ent.func.Clause;
 import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
+public interface OrMatchClause1<V, I, O> extends Clause<MatchResult1<V, I, O>> {
 
-    static <V, I, O> OrMatchClause1<V, I, O> of(Supplier<MatchResult<V, I, O>> supplier) {
+    static <V, I, O> OrMatchClause1<V, I, O> of(Supplier<MatchResult1<V, I, O>> supplier) {
         return new OrMatchClause1<V, I, O>() {
             @Override
-            public MatchResult<V, I, O> get() {
+            public MatchResult1<V, I, O> get() {
                 return supplier.get();
             }
         };
     }
 
     default <I> OrThenClause1<V, V, O> isEqualTo(I otherObject) {
-        return OrThenClause1.of(() -> MatchResult.of(subject().either()
-                                                              .mapLeft(tuple -> Option.of(tuple._1())
+        return OrThenClause1.of(() -> MatchResult1.of(subject().either()
+                                                               .mapLeft(tuple -> Option.of(tuple._1())
                                                                                       .filter(v -> v.equals(otherObject))
                                                                                       .fold(v -> Tuple2.of(v,
                                                                                                            Option.some(v)),
@@ -30,8 +31,8 @@ public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
     }
 
     default <I> OrThenClause1<V, I, O> isOfType(Class<I> possibleType) {
-        return OrThenClause1.of(() -> MatchResult.of(subject().either()
-                                                              .mapLeft(tuple -> Option.of(tuple._1())
+        return OrThenClause1.of(() -> MatchResult1.of(subject().either()
+                                                               .mapLeft(tuple -> Option.of(tuple._1())
                                                                                       .flatMap(inputTypeMapper(possibleType))
                                                                                       .fold(i -> Tuple2.of(tuple._1(),
                                                                                                            Option.some(i)),
@@ -41,8 +42,8 @@ public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
 
     default <I> OrThenClause1<V, I, O> isOfTypeAnd(Class<I> possibleType,
                                                    Predicate<? super I> condition) {
-        return OrThenClause1.of(() -> MatchResult.of(subject().either()
-                                                              .mapLeft(tuple -> Option.of(tuple._1())
+        return OrThenClause1.of(() -> MatchResult1.of(subject().either()
+                                                               .mapLeft(tuple -> Option.of(tuple._1())
                                                                                       .flatMap(inputTypeMapper(possibleType))
                                                                                       .filter(condition)
                                                                                       .fold(i -> Tuple2.of(tuple._1(),
@@ -52,8 +53,8 @@ public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
     }
 
     default OrThenClause1<V, V, O> fits(Predicate<? super V> condition) {
-        return OrThenClause1.of(() -> MatchResult.of(subject().either()
-                                                              .mapLeft(tuple -> tuple.first()
+        return OrThenClause1.of(() -> MatchResult1.of(subject().either()
+                                                               .mapLeft(tuple -> tuple.first()
                                                                                      .filter(condition)
                                                                                      .fold(v -> Tuple2.of(v,
                                                                                                           Option.some(v)),
@@ -64,8 +65,8 @@ public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
     }
 
     default <T, E> OrThenIterableClause1<V, E, O> isIterableOver(Class<E> elementType) {
-        return OrThenIterableClause1.of(() -> MatchResult.of(subject().either()
-                                                                      .mapLeft(tuple -> Option.of(tuple._1())
+        return OrThenIterableClause1.of(() -> MatchResult1.of(subject().either()
+                                                                       .mapLeft(tuple -> Option.of(tuple._1())
                                                                                               .flatMap(inputTypeMapper(Iterable.class))
                                                                                               .map(iterable -> new TypeCheckingIterator<T, E>(iterable.iterator(),
                                                                                                                                               elementType))
@@ -79,8 +80,8 @@ public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
 
     default <T, E> OrThenIterableClause1<V, E, O> isIterableOverAnd(Class<E> elementType,
                                                                     Predicate<Streamable<E>> condition) {
-        return OrThenIterableClause1.of(() -> MatchResult.of(subject().either()
-                                                                      .mapLeft(tuple -> Option.of(tuple._1())
+        return OrThenIterableClause1.of(() -> MatchResult1.of(subject().either()
+                                                                       .mapLeft(tuple -> Option.of(tuple._1())
                                                                                               .flatMap(inputTypeMapper(Iterable.class))
                                                                                               .map(iterable -> new TypeCheckingIterator<T, E>(iterable.iterator(),
                                                                                                                                               elementType))
@@ -95,11 +96,11 @@ public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
     }
 
     default <I> OrThenClause1<V, I, O> mapsTo(Function<V, Option<I>> mapper) {
-        return OrThenClause1.of(() -> MatchResult.of(subject().either()
-                                                              .mapLeft(tuple -> tuple.first()
+        return OrThenClause1.of(() -> MatchResult1.of(subject().either()
+                                                               .mapLeft(tuple -> tuple.first()
                                                                                      .map(mapper)
                                                                                      ._1())
-                                                              .mapLeft(iOpt -> Tuple2.of(subject().either()
+                                                               .mapLeft(iOpt -> Tuple2.of(subject().either()
                                                                                                   .leftOrElse(null)
                                                                                                   ._1(),
                                                                                          iOpt))));
@@ -107,12 +108,12 @@ public interface OrMatchClause1<V, I, O> extends Clause1<MatchResult<V, I, O>> {
 
     default <I> OrThenClause1<V, I, O> mapsToAnd(Function<V, Option<I>> mapper,
                                                  Predicate<I> condition) {
-        return OrThenClause1.of(() -> MatchResult.of(subject().either()
-                                                              .mapLeft(tuple -> tuple.first()
+        return OrThenClause1.of(() -> MatchResult1.of(subject().either()
+                                                               .mapLeft(tuple -> tuple.first()
                                                                                      .map(mapper)
                                                                                      ._1()
                                                                                      .filter(condition))
-                                                              .mapLeft(iOpt -> Tuple2.of(subject().either()
+                                                               .mapLeft(iOpt -> Tuple2.of(subject().either()
                                                                                                   .leftOrElse(null)
                                                                                                   ._1(),
                                                                                          iOpt))));

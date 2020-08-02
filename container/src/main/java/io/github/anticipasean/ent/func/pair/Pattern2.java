@@ -1,4 +1,4 @@
-package io.github.anticipasean.ent.func;
+package io.github.anticipasean.ent.func.pair;
 
 import cyclops.data.tuple.Tuple2;
 import cyclops.function.Function1;
