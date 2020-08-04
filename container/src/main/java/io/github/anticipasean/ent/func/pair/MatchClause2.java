@@ -1,10 +1,13 @@
 package io.github.anticipasean.ent.func.pair;
 
+import static io.github.anticipasean.ent.func.VariantMapper.inputTypeMapper;
+
 import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.func.Clause;
-import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
+import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
+import java.util.Iterator;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -147,10 +150,10 @@ public interface MatchClause2<K, V> extends Clause<Tuple2<K, V>> {
 
     default <T, E> ThenIterableClause2<K, V, K, E> valueIterableOver(Class<E> possibleElementType) {
         return ThenIterableClause2.of(() -> subject().map2(inputTypeMapper(Iterable.class))
-                                                     .map2(iterableOpt -> iterableOpt.map(iterable -> new TypeCheckingIterator<T, E>(iterable.iterator(),
-                                                                                                                                     possibleElementType))
-                                                                                     .filter(TypeCheckingIterator::hasNext)
-                                                                                     .map(typeChIter -> (Iterable<E>) (() -> typeChIter)))
+                                                     .map2(iterableOpt -> iterableOpt.map(iterable -> TypeMatchingIterable.of(iterable.iterator(),
+                                                                                                                              possibleElementType))
+                                                                                     .filter(iterable -> iterable.iterator()
+                                                                                                                 .hasNext()))
                                                      .fold((k, iterableOpt) -> Tuple2.of(subject(),
                                                                                          iterableOpt.map(iter -> Tuple2.of(k,
                                                                                                                            iter)))));
@@ -159,14 +162,13 @@ public interface MatchClause2<K, V> extends Clause<Tuple2<K, V>> {
     default <T, E> ThenIterableClause2<K, V, K, E> valueIterableOverAnd(Class<E> possibleElementType,
                                                                         Predicate<Streamable<E>> condition) {
         return ThenIterableClause2.of(() -> subject().map2(inputTypeMapper(Iterable.class))
-                                                     .map2(iterableOpt -> iterableOpt.map(iterable -> new TypeCheckingIterator<T, E>(iterable.iterator(),
-                                                                                                                                     possibleElementType))
-                                                                                     .filter(iter -> Option.some(iter)
-                                                                                                           .filter(TypeCheckingIterator::hasNext)
+                                                     .map2(iterableOpt -> iterableOpt.map(iterable -> TypeMatchingIterable.of(iterable.iterator(),
+                                                                                                                              possibleElementType))
+                                                                                     .filter(iter -> Option.some(iter.iterator())
+                                                                                                           .filter(Iterator::hasNext)
                                                                                                            .map(Streamable::fromIterator)
                                                                                                            .filter(condition)
-                                                                                                           .isPresent())
-                                                                                     .map(typeChIter -> (Iterable<E>) (() -> typeChIter)))
+                                                                                                           .isPresent()))
                                                      .fold((k, iterableOpt) -> Tuple2.of(subject(),
                                                                                          iterableOpt.map(iter -> Tuple2.of(k,
                                                                                                                            iter)))));

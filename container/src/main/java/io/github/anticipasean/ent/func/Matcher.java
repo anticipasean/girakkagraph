@@ -6,7 +6,7 @@ import io.github.anticipasean.ent.func.single.MatchClause1;
 
 public interface Matcher<V> extends Clause<V> {
 
-    static <S> Matcher<S> of(S subject) {
+    static <S> Matcher1<S> of(S subject) {
         return new Matcher1<S>() {
             @Override
             public S get() {
@@ -15,8 +15,8 @@ public interface Matcher<V> extends Clause<V> {
         };
     }
 
-    static <K, V> Matcher<Tuple2<K, V>> of(K key,
-                                           V value) {
+    static <K, V> Matcher2<K, V> of(K key,
+                                    V value) {
         return new Matcher2<K, V>() {
             @Override
             public Tuple2<K, V> get() {
@@ -26,7 +26,7 @@ public interface Matcher<V> extends Clause<V> {
         };
     }
 
-    static <K, V> Matcher<Tuple2<K, V>> of(Tuple2<K, V> value) {
+    static <K, V> Matcher2<K, V> of(Tuple2<K, V> value) {
         return new Matcher2<K, V>() {
             @Override
             public Tuple2<K, V> get() {

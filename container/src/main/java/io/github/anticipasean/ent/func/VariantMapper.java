@@ -1,48 +1,42 @@
 package io.github.anticipasean.ent.func;
 
 import cyclops.control.Option;
-import cyclops.data.tuple.Tuple1;
+import cyclops.control.Try;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import org.slf4j.LoggerFactory;
 
-public interface VariantMappable {
+public interface VariantMapper {
 
-    default <I, R> boolean isOfType(I inputObject,
+    static <I, R> boolean isOfType(I inputObject,
                                    Class<R> returnType) {
         return inputObject != null && returnType != null && (returnType.isAssignableFrom(inputObject.getClass()) || (
             inputObject.getClass()
                        .isPrimitive() && returnType.isInstance(inputObject)));
     }
 
-    default <I, R> Option<R> tryDynamicCastOfInputToReturnType(I inputObject,
+    static <I, R> Option<R> tryDynamicCastOfInputToReturnType(I inputObject,
                                                               Class<R> returnType) {
         if (inputObject == null || returnType == null) {
             return Option.none();
         }
-        try {
-            return Tuple1.of(inputObject)
-                         .map(returnType::cast)
-                         .fold(Option::some);
-        } catch (ClassCastException e) {
-            LoggerFactory.getLogger(VariantMappable.class).error("class_cast_exception: ", e);
-            return Option.none();
-        }
+
+        return Try.withCatch(() -> returnType.cast(inputObject),
+                             ClassCastException.class)
+                  .toOption();
     }
 
-    default <I, R> Predicate<? super I> inputTypeFilter(Class<R> returnType) {
+    static <I, R> Predicate<? super I> inputTypeFilter(Class<R> returnType) {
         return i -> isOfType(i,
                              returnType);
     }
 
-    default <I, R> Function<I, Option<R>> inputTypeMapper(Class<R> returnType) {
+    static <I, R> Function<I, Option<R>> inputTypeMapper(Class<R> returnType) {
         return i -> Option.ofNullable(i)
                           .filter(inputTypeFilter(returnType))
-                          .map(dynamicCaster(returnType))
-                          .orElse(Option.none());
+                          .flatMap(dynamicCaster(returnType));
     }
 
-    default <I, R> Function<I, Option<R>> dynamicCaster(Class<R> returnType) {
+    static <I, R> Function<I, Option<R>> dynamicCaster(Class<R> returnType) {
         return i -> tryDynamicCastOfInputToReturnType(i,
                                                       returnType);
     }

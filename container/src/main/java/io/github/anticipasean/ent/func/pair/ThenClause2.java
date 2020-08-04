@@ -33,15 +33,11 @@ public interface ThenClause2<K, V, KI, VI> extends Clause<Tuple2<Tuple2<K, V>, O
                                                                                                                               Option.none())))));
     }
 
-    default <KO, VO> OrMatchClause2<K, V, KI, VI, KO, VO> then(Function<VI, VO> valueMapper) {
-        return OrMatchClause2.of(() -> MatchResult2.of(subject()._2()
-                                                                .map(Tuple2::_2)
-                                                                .map(valueMapper)
-                                                                .zip(Option.of(subject()._1()
-                                                                                        ._1()))
-                                                                .map(Tuple2::swap)
-                                                                .toEither(Tuple2.of(subject()._1(),
-                                                                                    Option.<Tuple2<KO, VO>>none()))));
+    default <KO, VO> OrMatchClause2<K, V, KI, VI, KI, VO> then(Function<VI, VO> valueMapper) {
+        return OrMatchClause2.of(() -> MatchResult2.of(subject().map2(kiviOptTuple -> kiviOptTuple.map(kiviTuple2 -> kiviTuple2.map2(valueMapper)))
+                                                                .fold((kvTuple, kiVoTupleOpt) -> kiVoTupleOpt.toEither(Tuple2.of(subject()._1(),
+                                                                                                                                 Option.none())))));
+
     }
 
 }

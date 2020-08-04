@@ -10,21 +10,33 @@ public class BasicEntTest {
 
     private Logger logger = LoggerFactory.getLogger(BasicEntTest.class);
 
-    //    @Test
-    //    public void mapperTest(){
-    //        Ent.of("one", 1).headOption();
-    //    }
-    //
-    //    @Test
-    //    public void headTest(){
-    //        Ent.of("one", 1).headOption();
-    //    }
-    //
     @Test
-    public void primitivesGetAndMatchTest() {
-        logger.info("constructing an ent");
-        Assert.assertEquals("two_int",
-                            Ent.of("blah",
+    public void mapValueTest() {
+        Assert.assertEquals(Ent.of("one",
+                                   1)
+                               .map(integer -> 2),
+                            Ent.of("one",
+                                   2));
+    }
+
+    @Test
+    public void mapKeyTest() {
+        Assert.assertEquals(Ent.of("one",
+                                   1)
+                               .mapKeys(s -> "two"),
+                            Ent.of("two",
+                                   1));
+    }
+
+    @Test
+    public void headTest() {
+        Ent.of("one",
+               1);
+    }
+
+    @Test
+    public void primitiveMatchGetTest() {
+        Assert.assertEquals(Ent.of("blah",
                                    2)
                                .matchGet("blah",
                                          matcher -> matcher.caseWhenValue()
@@ -35,18 +47,9 @@ public class BasicEntTest {
                                                            .isOfType(Integer.class)
                                                            .then(integer -> "two_int")
                                                            .elseDefault("no match"))
-                               .orElse("key not found"));
+                               .orElse("key not found"),
+                            "two_int");
     }
-    //
-    //    @Test
-    //    public void mapWithPatternTest() {
-    //        Ent.of("blah",
-    //               2)
-    //           .matchMap(integerIfMatchClause -> integerIfMatchClause.ifOfType(String.class)
-    //                                                                 .then(s -> "twoStr")
-    //                                                                 .orElse("notStr"))
-    //           .forEach(stringStringTuple2 -> System.out.println(
-    //               "tuple: " + stringStringTuple2._1() + " " + stringStringTuple2._2()));
-    //    }
+
 
 }

@@ -3,11 +3,11 @@ package io.github.anticipasean.ent;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.func.Matcher;
-import io.github.anticipasean.ent.pattern.PatternMatching;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,14 +21,14 @@ public class ValuePatternMatchingTest {
     @Test
     public void ifFitsConditionTest() {
         Assert.assertEquals("eq 5",
-                            PatternMatching.forValue(5)
-                                           .ifFits(integer -> integer > 6)
-                                           .then(integer -> "gt 6")
-                                           .ifFits(integer -> integer < 5)
-                                           .then(integer -> "lt 5")
-                                           .ifFits(integer -> integer == 5)
-                                           .then(integer -> "eq 5")
-                                           .orElse("no Match"));
+                            Matcher.caseWhen(5)
+                                   .fits(integer -> integer > 6)
+                                   .then(integer -> "gt 6")
+                                   .fits(integer -> integer < 5)
+                                   .then(integer -> "lt 5")
+                                   .fits(integer -> integer == 5)
+                                   .then(integer -> "eq 5")
+                                   .elseDefault("no Match"));
     }
 
     @Test
@@ -36,18 +36,22 @@ public class ValuePatternMatchingTest {
         Number numberFive = Integer.valueOf(5);
         Tuple2<String, String> patternMatchingResult = Matcher.caseWhen("five",
                                                                         numberFive)
-                                                              .valueOfTypeAndBothFit(Double.class, (s, vDoubl) -> s.equalsIgnoreCase("one-half") &&  vDoubl.compareTo(0.5D) == 0)
-                                                              .then((s, aDouble) -> Tuple2.of(s, "0.5"))
-                                                              .keyFits(s -> "five".equalsIgnoreCase(s),
-                                                                       BigDecimal.class)
-                                                              .and(bigDecForm -> BigDecimal.valueOf(5.0000D)
-                                                                                           .equals(bigDecForm))
-                                                              .then((s, bigDecimalForm) -> "5.0000")
-                                                              .keyFitsAn(s -> "five".equalsIgnoreCase(s),
-                                                                       Integer.class)
-                                                              .and(integer -> 5 == integer)
-                                                              .then((s, integerForm) -> "5")
-                                                              .orElse("No Match");
+                                                              .valueOfTypeAndBothFit(Double.class,
+                                                                                     (s, vDoubl) -> s.equalsIgnoreCase("one-half")
+                                                                                         && vDoubl.compareTo(0.5D) == 0)
+                                                              .then((s, aDouble) -> Tuple2.of(s,
+                                                                                              "0.5"))
+                                                              .valueOfTypeAndBothFit(BigDecimal.class,
+                                                                                     (s, bigD) -> "five".equalsIgnoreCase(s)
+                                                                                         && BigDecimal.valueOf(5.0000D)
+                                                                                                      .equals(bigD))
+                                                              .then(Function.identity(), bigDecimalForm -> "5.0000")
+                                                              .valueOfTypeAndBothFit(Integer.class,
+                                                                                     (s, i) -> "five".equalsIgnoreCase(s)
+                                                                                         && 5 == i)
+                                                              .then(Function.identity(), (integerForm) -> "5")
+                                                              .elseDefault(Tuple2.of("No match",
+                                                                                     "No match"));
         logger.info("pattern_matching_result: [ value expected: {} as {}, actual: {} as {} ]",
                     "5",
                     String.class,
@@ -87,9 +91,9 @@ public class ValuePatternMatchingTest {
                     Tuple2.class,
                     patternMatchingResult,
                     patternMatchingResult.getClass());
-        Assert.assertEquals(Tuple2.of("five",
-                                      "5"),
-                            patternMatchingResult);
+        Assert.assertEquals(patternMatchingResult,
+                            Tuple2.of("five",
+                                      "5"));
 
 
     }

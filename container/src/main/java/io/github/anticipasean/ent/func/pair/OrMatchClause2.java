@@ -1,10 +1,12 @@
 package io.github.anticipasean.ent.func.pair;
 
+import static io.github.anticipasean.ent.func.VariantMapper.inputTypeMapper;
+
 import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.func.Clause;
-import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
+import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -213,15 +215,11 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
                                                                        .mapLeft(Tuple2::_1)
                                                                        .mapLeft(Tuple2::_2)
                                                                        .mapLeft(inputTypeMapper(Iterable.class))
-                                                                       .mapLeft(viOpt -> viOpt.map(iterable -> new TypeCheckingIterator<T, E>(iterable.iterator(),
-                                                                                                                                              possibleElementType))
-                                                                                              .filter(iter -> Option.some(iter)
-                                                                                                                    .filter(TypeCheckingIterator::hasNext)
-                                                                                                                    .map(Streamable::fromIterator)
-                                                                                                                    .isPresent())
-                                                                                              .map(typeChIter -> (Iterable<E>) (() -> typeChIter)))
-                                                                       .mapLeft(viIterOpt -> Tuple2.of(subject().either()
-                                                                                                                .leftOrElse(null)
+                                                                       .mapLeft(viOpt -> viOpt.map(iterable -> TypeMatchingIterable.of(iterable.iterator(),
+                                                                                                                                       possibleElementType))
+                                                                                              .filter(iterable -> iterable.iterator()
+                                                                                                                          .hasNext()))
+                                                                       .mapLeft(viIterOpt -> Tuple2.of(subject().unapply()
                                                                                                                 ._1(),
                                                                                                        viIterOpt.map(viIterable -> Tuple2.of(subject().unapply()
                                                                                                                                                       ._1()
@@ -235,13 +233,10 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
                                                                        .mapLeft(Tuple2::_1)
                                                                        .mapLeft(Tuple2::_2)
                                                                        .mapLeft(inputTypeMapper(Iterable.class))
-                                                                       .mapLeft(viOpt -> viOpt.map(iterable -> new TypeCheckingIterator<T, E>(iterable.iterator(),
-                                                                                                                                              possibleElementType))
-                                                                                              .filter(iter -> Option.some(iter)
-                                                                                                                    .filter(TypeCheckingIterator::hasNext)
-                                                                                                                    .map(Streamable::fromIterator)
-                                                                                                                    .isPresent())
-                                                                                              .map(typeChIter -> (Iterable<E>) (() -> typeChIter))
+                                                                       .mapLeft(viOpt -> viOpt.map(iterable -> TypeMatchingIterable.of(iterable.iterator(),
+                                                                                                                                       possibleElementType))
+                                                                                              .filter(iterable -> iterable.iterator()
+                                                                                                                          .hasNext())
                                                                                               .filter(iterable -> condition.test(Streamable.fromIterable(iterable))))
                                                                        .mapLeft(viIterOpt -> Tuple2.of(subject().either()
                                                                                                                 .leftOrElse(null)
@@ -349,6 +344,20 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
     default Tuple2<KO, VO> elseDefault(Tuple2<KO, VO> defaultOutput) {
         return subject().either()
                         .orElse(defaultOutput);
+    }
+
+    default KO elseDefaultKey(KO defaultKey) {
+        return subject().either()
+                        .orElse(Tuple2.of(defaultKey,
+                                          null))
+                        ._1();
+    }
+
+    default VO elseDefaultValue(VO defaultValue) {
+        return subject().either()
+                        .orElse(Tuple2.of(null,
+                                          defaultValue))
+                        ._2();
     }
 
     default Tuple2<KO, VO> elseGet(Supplier<Tuple2<KO, VO>> defaultOutputSupplier) {

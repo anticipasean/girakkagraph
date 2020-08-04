@@ -1,10 +1,12 @@
 package io.github.anticipasean.ent.func.single;
 
+import static io.github.anticipasean.ent.func.VariantMapper.inputTypeMapper;
+
 import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.func.Clause;
-import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
+import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -62,10 +64,10 @@ public interface MatchClause1<V> extends Clause<V> {
     default <T, E> ThenIterableClause1<V, E> isIterableOver(Class<E> elementType) {
         return ThenIterableClause1.of(() -> Option.of(subject())
                                                   .flatMap(inputTypeMapper(Iterable.class))
-                                                  .map(iterable -> new TypeCheckingIterator<T, E>(iterable.iterator(),
-                                                                                                  elementType))
-                                                  .filter(TypeCheckingIterator::hasNext)
-                                                  .map(iter -> (Iterable<E>) (() -> iter))
+                                                  .map(iterable -> TypeMatchingIterable.of(iterable.iterator(),
+                                                                                           elementType))
+                                                  .filter(iterable -> iterable.iterator()
+                                                                              .hasNext())
                                                   .fold(iterable -> Tuple2.of(subject(),
                                                                               Option.some(iterable)),
                                                         () -> Tuple2.of(subject(),
@@ -76,14 +78,13 @@ public interface MatchClause1<V> extends Clause<V> {
                                                                Predicate<Streamable<E>> condition) {
         return ThenIterableClause1.of(() -> Option.of(subject())
                                                   .flatMap(inputTypeMapper(Iterable.class))
-                                                  .map(iterable -> new TypeCheckingIterator<T, E>(iterable.iterator(),
-                                                                                                  elementType))
-                                                  .filter(TypeCheckingIterator::hasNext)
-                                                  .map(iter -> (Iterable<E>) (() -> iter))
-                                                  .map(Streamable::fromIterable)
-                                                  .filter(condition)
-                                                  .fold(streamable -> Tuple2.of(subject(),
-                                                                                Option.some((Iterable<E>) streamable::iterator)),
+                                                  .map(iterable -> TypeMatchingIterable.of(iterable.iterator(),
+                                                                                           elementType))
+                                                  .filter(iterable -> iterable.iterator()
+                                                                              .hasNext())
+                                                  .filter(iterable -> condition.test(Streamable.fromIterable(iterable)))
+                                                  .fold(iterable -> Tuple2.of(subject(),
+                                                                              Option.some(iterable)),
                                                         () -> Tuple2.of(subject(),
                                                                         Option.none())));
     }

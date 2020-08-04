@@ -95,6 +95,8 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
 //    }
 
     default <R> Ent<K, R> matchMap(ValuePattern<V, R> valuePattern) {
+        requireNonNull(valuePattern,
+                       "valuePattern");
         return fromImmutableMap(toImmutableMap().map(ValuePattern.mapper(valuePattern)));
     }
 

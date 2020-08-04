@@ -16,6 +16,14 @@ public interface MatchResult2<K, V, KI, VI, KO, VO> extends Deconstruct3<Tuple2<
             public Either<Tuple2<Tuple2<K, V>, Option<Tuple2<KI, VI>>>, Tuple2<KO, VO>> either() {
                 return inputValuesOrResultOutputEither;
             }
+
+            @Override
+            public String toString() {
+                final StringBuilder sb = new StringBuilder("MatchResult2{");
+                sb.append(either());
+                sb.append('}');
+                return sb.toString();
+            }
         };
     }
 
@@ -29,4 +37,5 @@ public interface MatchResult2<K, V, KI, VI, KO, VO> extends Deconstruct3<Tuple2<
                                  ._2(),
                          either().orElse(null));
     }
+
 }

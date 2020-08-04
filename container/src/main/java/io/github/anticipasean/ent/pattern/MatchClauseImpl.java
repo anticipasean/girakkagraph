@@ -1,9 +1,6 @@
 package io.github.anticipasean.ent.pattern;
 
-import cyclops.control.Option;
-import io.github.anticipasean.ent.iterator.TypeCheckingIterator;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import io.github.anticipasean.ent.iterator.TypeMatchingIterator;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -40,7 +37,7 @@ public class MatchClauseImpl<V> implements MatchClause<V> {
                                                .orElse(() -> Stream.empty()
                                                                    .iterator());
             return new MatchIterablePredicateImpl<>(valueObject,
-                                                    () -> new TypeCheckingIterator<>(iterable.iterator(), elementType));
+                                                    () -> new TypeMatchingIterator<>(iterable.iterator(), elementType));
         }
         return new MatchIterablePredicateImpl<>(valueObject, null);
     }

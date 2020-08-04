@@ -19,11 +19,11 @@ public interface ThenIterableClause1<V, I> extends Clause<Tuple2<V, Option<Itera
     }
 
     default <O> OrMatchClause1<V, I, O> then(Function<Streamable<I>, O> mapper) {
-        return OrMatchClause1.of(() -> MatchResult1.of(subject().map2(inputTypeAsOpt -> inputTypeAsOpt.map(Streamable::fromIterable)
-                                                                                                      .map(mapper)
-                                                                                                      .toEither(Tuple2.of(subject()._1(),
-                                                                                                                          Option.<I>none())))
-                                                                ._2()));
+        return OrMatchClause1.of(() -> MatchResult1.of(subject().map2(inputTypeAsOpt -> inputTypeAsOpt.map(iter -> Streamable.fromIterable(iter))
+                                                                                                      .map(mapper))
+                                                                ._2()
+                                                                .toEither(Tuple2.of(subject()._1(),
+                                                                                    Option.none()))));
     }
 
 }
