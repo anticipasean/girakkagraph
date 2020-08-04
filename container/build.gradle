@@ -25,3 +25,7 @@ test {
     useTestNG()
 //    systemProperty 'java.util.logging.manager', 'org.apache.logging.log4j.LogManager'
 }
+
+compileJava {
+    options.compilerArgs += '-Xlint:unchecked'
+}

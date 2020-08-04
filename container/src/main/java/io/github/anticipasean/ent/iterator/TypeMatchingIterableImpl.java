@@ -1,12 +1,12 @@
 package io.github.anticipasean.ent.iterator;
 
 import cyclops.data.LazySeq;
+import cyclops.function.Function0;
 import cyclops.reactive.ReactiveSeq;
 import java.util.Iterator;
 import java.util.Objects;
-import java.util.function.Supplier;
 
-public class TypeMatchingIterableImpl<E> implements TypeMatchingIterable<E> {
+class TypeMatchingIterableImpl<E> implements TypeMatchingIterable<E> {
 
     private final TypeMatchingIterator<E> typeMatchingIterator;
     private final ReactiveSeq<E> reactiveSeq;
@@ -18,13 +18,22 @@ public class TypeMatchingIterableImpl<E> implements TypeMatchingIterable<E> {
         this.lazySeq = this.reactiveSeq.lazySeq();
     }
 
-    private Supplier<Iterator<E>> iteratorSupplier() {
-        return lazySeq::iterator;
+    /**
+     * Use this iterator instead of the LazySeq one as it returns null when the iterator is out of elements instead of throwing
+     * the API spec NoSuchElementException
+     *
+     * @param lazySeqParam
+     * @param <E>
+     * @return
+     */
+    private static <E> Function0<Iterator<E>> iteratorOverLazySeq(LazySeq<E> lazySeq) {
+        return () -> new LazySeqIterator<>(lazySeq);
     }
+
 
     @Override
     public Iterator<E> iterator() {
-        return iteratorSupplier().get();
+        return iteratorOverLazySeq(lazySeq).apply();
     }
 
     @Override
@@ -57,4 +66,5 @@ public class TypeMatchingIterableImpl<E> implements TypeMatchingIterable<E> {
                             reactiveSeq,
                             lazySeq);
     }
+
 }

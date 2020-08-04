@@ -3,7 +3,7 @@ package io.github.anticipasean.ent.pattern;
 import static java.util.Objects.nonNull;
 
 import cyclops.control.Option;
-import io.github.anticipasean.ent.iterator.TypeMatchingIterator;
+import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -55,8 +55,8 @@ public class OrMatchClauseImpl<V, I, O> implements OrMatchClause<V, I, O> {
                                                                Iterable.class)
                                                .orElse(null);
             return new OrMatchIterablePredicateImpl<>(valueObject,
-                                                      () -> new TypeMatchingIterator<>(iterable.iterator(),
-                                                                                       elementType),
+                                                      TypeMatchingIterable.of(iterable.iterator(),
+                                                                           elementType),
                                                       null);
         } else {
             return new OrMatchIterablePredicateImpl<>(valueObject,

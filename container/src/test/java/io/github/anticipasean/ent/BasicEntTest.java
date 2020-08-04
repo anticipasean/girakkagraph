@@ -38,7 +38,7 @@ public class BasicEntTest {
     public void primitiveMatchGetTest() {
         Assert.assertEquals(Ent.of("blah",
                                    2)
-                               .matchGet("blah",
+                               .matchGetValue("blah",
                                          matcher -> matcher.caseWhenValue()
                                                            .isOfType(BigDecimal.class)
                                                            .then(bigDecimal -> "one_big_dec")

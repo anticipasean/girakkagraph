@@ -1,6 +1,6 @@
 package io.github.anticipasean.ent.pattern;
 
-import io.github.anticipasean.ent.iterator.TypeMatchingIterator;
+import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -37,7 +37,7 @@ public class MatchClauseImpl<V> implements MatchClause<V> {
                                                .orElse(() -> Stream.empty()
                                                                    .iterator());
             return new MatchIterablePredicateImpl<>(valueObject,
-                                                    () -> new TypeMatchingIterator<>(iterable.iterator(), elementType));
+                                                    TypeMatchingIterable.of(iterable.iterator(), elementType));
         }
         return new MatchIterablePredicateImpl<>(valueObject, null);
     }

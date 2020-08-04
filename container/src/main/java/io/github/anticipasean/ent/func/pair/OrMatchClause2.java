@@ -196,7 +196,7 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
     }
 
     default <VI> OrThenClause2<K, V, K, VI, KO, VO> valueOfTypeAndBothFit(Class<VI> possibleValueType,
-                                                                          BiPredicate<K, VI> condition) {
+                                                                          BiPredicate<? super K, ? super VI> condition) {
         return OrThenClause2.of(() -> MatchResult2.of(subject().either()
                                                                .mapLeft(Tuple2::_1)
                                                                .mapLeft(kvTuple -> kvTuple.map2(inputTypeMapper(possibleValueType))
@@ -336,9 +336,19 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
 
     }
 
-    default Option<Tuple2<KO, VO>> yield() {
+    default Option<Tuple2<KO, VO>> elseYield() {
         return subject().either()
                         .toOption();
+    }
+
+    default Option<KO> elseYieldKey() {
+        return subject().either()
+                        .toOption().map(Tuple2::_1);
+    }
+
+    default Option<VO> elseYieldValue() {
+        return subject().either()
+                        .toOption().map(Tuple2::_2);
     }
 
     default Tuple2<KO, VO> elseDefault(Tuple2<KO, VO> defaultOutput) {
@@ -360,9 +370,9 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
                         ._2();
     }
 
-    default Tuple2<KO, VO> elseGet(Supplier<Tuple2<KO, VO>> defaultOutputSupplier) {
+    default Tuple2<KO, VO> elseGet(Supplier<Tuple2<KO, VO>> tupleSupplier) {
         return subject().either()
-                        .orElseGet(defaultOutputSupplier);
+                        .orElseGet(tupleSupplier);
     }
 
     default <X extends RuntimeException> Tuple2<KO, VO> elseThrow(Supplier<X> throwableSupplier) {

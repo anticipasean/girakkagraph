@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-public class TypeMatchingIterator<E> implements Iterator<E> {
+class TypeMatchingIterator<E> implements Iterator<E> {
 
     final Class<E> elementType;
     final Iterator<?> iteratorOfUnknownType;
