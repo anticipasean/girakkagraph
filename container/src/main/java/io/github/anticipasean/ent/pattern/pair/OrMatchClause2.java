@@ -3,9 +3,9 @@ package io.github.anticipasean.ent.pattern.pair;
 import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
-import io.github.anticipasean.ent.pattern.VariantMapper;
-import io.github.anticipasean.ent.pattern.Clause;
 import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
+import io.github.anticipasean.ent.pattern.Clause;
+import io.github.anticipasean.ent.pattern.VariantMapper;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -342,17 +342,26 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
 
     default Option<KO> elseYieldKey() {
         return subject().either()
-                        .toOption().map(Tuple2::_1);
+                        .toOption()
+                        .map(Tuple2::_1);
     }
 
     default Option<VO> elseYieldValue() {
         return subject().either()
-                        .toOption().map(Tuple2::_2);
+                        .toOption()
+                        .map(Tuple2::_2);
     }
 
     default Tuple2<KO, VO> elseDefault(Tuple2<KO, VO> defaultOutput) {
         return subject().either()
                         .orElse(defaultOutput);
+    }
+
+    default Tuple2<KO, VO> elseDefault(KO defaultKey,
+                                       VO defaultValue) {
+        return subject().either()
+                        .orElse(Tuple2.of(defaultKey,
+                                          defaultValue));
     }
 
     default KO elseDefaultKey(KO defaultKey) {
