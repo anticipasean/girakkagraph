@@ -1,7 +1,6 @@
-package io.github.anticipasean.ent;
+package io.github.anticipasean.ent.pattern;
 
 import cyclops.control.Option;
-import io.github.anticipasean.ent.pattern.Matcher;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -80,7 +79,7 @@ public class ValuePatternMatchingTest {
     }
 
     @Test
-    public void functionalMatcherPositiveTest() {
+    public void typeMatchPositiveTest() {
 
         BigDecimal bigDec = Matcher.caseWhen(40)
                                    .isOfType(BigDecimal.class)
@@ -95,7 +94,7 @@ public class ValuePatternMatchingTest {
     }
 
     @Test
-    public void functionalMatcherNegativeTest() {
+    public void typeMatchNegativeTest() {
 
         BigDecimal bigDec = Matcher.caseWhen(BigInteger.valueOf(20))
                                    .isOfType(BigDecimal.class)
@@ -110,7 +109,7 @@ public class ValuePatternMatchingTest {
     }
 
     @Test
-    public void functionalMatcherPositiveOptionTest() {
+    public void typeMatchPositiveOptionTest() {
 
         Option<BigDecimal> bigDec = Matcher.caseWhen(40)
                                            .isOfType(BigDecimal.class)
@@ -124,7 +123,7 @@ public class ValuePatternMatchingTest {
     }
 
     @Test
-    public void functionalMatcherNegativeOptionTest() {
+    public void typeMatchNegativeOptionTest() {
 
         Option<BigDecimal> bigDec = Matcher.caseWhen(BigInteger.valueOf(20))
                                            .isOfType(BigDecimal.class)

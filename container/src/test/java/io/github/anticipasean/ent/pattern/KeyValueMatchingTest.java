@@ -1,10 +1,10 @@
-package io.github.anticipasean.ent;
+package io.github.anticipasean.ent.pattern;
 
 import cyclops.companion.Streamable;
 import cyclops.data.Seq;
 import cyclops.data.tuple.Tuple2;
 import cyclops.reactive.ReactiveSeq;
-import io.github.anticipasean.ent.pattern.Matcher;
+import io.github.anticipasean.ent.Ent;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;

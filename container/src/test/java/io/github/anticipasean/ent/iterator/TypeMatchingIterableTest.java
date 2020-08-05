@@ -1,7 +1,6 @@
-package io.github.anticipasean.ent;
+package io.github.anticipasean.ent.iterator;
 
 import cyclops.control.Try;
-import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
