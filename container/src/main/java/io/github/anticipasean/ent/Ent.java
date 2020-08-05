@@ -349,10 +349,10 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
         return fromImmutableMap(toImmutableMap().concatMap(Pattern2.asConcatMapper(keyValuePattern)));
     }
 
-    default <KO, VO, R> R matchFoldMap(R zero,
-                                       Pattern2<K, V, KO, VO> keyValuePattern,
-                                       Function<Tuple2<KO, VO>, R> mapper,
-                                       BinaryOperator<R> combiner) {
+    default <KO, VO, R> R matchFold(R zero,
+                                    Pattern2<K, V, KO, VO> keyValuePattern,
+                                    Function<Tuple2<KO, VO>, R> mapper,
+                                    BinaryOperator<R> combiner) {
         requireNonNull(zero,
                        "zero");
         requireNonNull(keyValuePattern,
@@ -367,9 +367,9 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                                   .apply(tuple2))));
     }
 
-    default <R> R matchFoldMapKeys(R zero,
-                                   Pattern1<K, R> keyPattern,
-                                   BinaryOperator<R> combiner) {
+    default <R> R matchFoldKeys(R zero,
+                                Pattern1<K, R> keyPattern,
+                                BinaryOperator<R> combiner) {
         requireNonNull(zero,
                        "zero");
         requireNonNull(keyPattern,
@@ -382,9 +382,9 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                      .apply(tuple2._1())));
     }
 
-    default <R> R matchFoldMapValues(R zero,
-                                     Pattern1<V, R> valuePattern,
-                                     BinaryOperator<R> combiner) {
+    default <R> R matchFoldValues(R zero,
+                                  Pattern1<V, R> valuePattern,
+                                  BinaryOperator<R> combiner) {
         requireNonNull(zero,
                        "zero");
         requireNonNull(valuePattern,
@@ -395,6 +395,46 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                    combiner,
                                                    tuple2 -> Pattern1.asMapper(valuePattern)
                                                                      .apply(tuple2._2())));
+    }
+
+    default <U, KO, VO> U matchFoldLeft(U identity,
+                                        Pattern2<K, V, KO, VO> keyValuePattern,
+                                        BiFunction<U, ? super Tuple2<KO, VO>, U> accumulator,
+                                        BinaryOperator<U> combiner) {
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(keyValuePattern,
+                       "keyValuePattern");
+        requireNonNull(accumulator,
+                       "accumulator");
+        requireNonNull(combiner,
+                       "combiner");
+        return toImmutableMap().foldLeft(identity,
+                                         (u, kvtuple) -> Pattern2.asMapper(keyValuePattern)
+                                                                 .andThen(outputTuple -> accumulator.apply(u,
+                                                                                                           outputTuple))
+                                                                 .apply(kvtuple),
+                                         combiner);
+    }
+
+    default <R, KO, VO> R matchFoldRight(R zero,
+                                         Pattern2<K, V, KO, VO> keyValuePattern,
+                                         BiFunction<KO, VO, R> mapper,
+                                         BinaryOperator<R> combiner) {
+        requireNonNull(zero,
+                       "zero");
+        requireNonNull(keyValuePattern,
+                       "keyValuePattern");
+        requireNonNull(mapper,
+                       "mapper");
+        requireNonNull(combiner,
+                       "combiner");
+        return toImmutableMap().foldMapRight(Reducer.of(zero,
+                                                        combiner,
+                                                        kvTuple -> Pattern2.asMapper(keyValuePattern)
+                                                                           .andThen(kovoTuple -> mapper.apply(kovoTuple._1(),
+                                                                                                              kovoTuple._2()))
+                                                                           .apply(kvTuple)));
     }
 
     default <VI> Ent<K, V> matchPut(K key,
@@ -435,13 +475,12 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                        "inputKeyValueTuples");
         requireNonNull(inputKeyValuePattern,
                        "inputKeyValuePattern");
-        return fromImmutableMap(Streamable.fromIterable(inputKeyValueTuples)
-                                          .map(tuple -> Option.ofNullable(tuple)
-                                                              .map(Pattern2.asMapper(inputKeyValuePattern)))
-                                          .filter(Option::isPresent)
-                                          .map(tupOpt -> tupOpt.orElse(null))
-                                          .foldRight(toImmutableMap(),
-                                                     (tuple, immutMap) -> immutMap.put(tuple)));
+        return fromImmutableMap(ReactiveSeq.fromIterable(inputKeyValueTuples)
+                                           .notNull()
+                                           .map(Pattern2.asMapper(inputKeyValuePattern))
+                                           .notNull()
+                                           .foldRight(toImmutableMap(),
+                                                      (tuple, immutMap) -> immutMap.put(tuple)));
     }
 
     /**
@@ -1063,14 +1102,14 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      * Transformers
      */
 
-    default Map<K, V> toJavaMap() {
+    default Map<K, V> toMutableMap() {
         return toImmutableMap().collect(Collectors.toMap(Tuple2::_1,
                                                          Tuple2::_2));
     }
 
 
-    default <KO, VO> HashMap<KO, VO> toHashMap(Function<? super Tuple2<K, V>, ? extends KO> keyMapper,
-                                               Function<? super Tuple2<K, V>, ? extends VO> valueMapper) {
+    default <KO, VO> HashMap<KO, VO> toImmutableHashMap(Function<? super Tuple2<K, V>, ? extends KO> keyMapper,
+                                                        Function<? super Tuple2<K, V>, ? extends VO> valueMapper) {
         requireNonNull(keyMapper,
                        "keyMapper");
         requireNonNull(valueMapper,
@@ -1079,8 +1118,26 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                           valueMapper);
     }
 
-    default <KO, VO> Map<KO, VO> toJavaMap(Function<? super Tuple2<K, V>, ? extends KO> keyMapper,
-                                           Function<? super Tuple2<K, V>, ? extends VO> valueMapper) {
+    default <KO, VO> TreeMap<KO, VO> toImmutableTreeMap(Comparator<KO> outputKeyComparator,
+                                                        Function<? super Tuple2<K, V>, ? extends KO> keyMapper,
+                                                        Function<? super Tuple2<K, V>, ? extends VO> valueMapper) {
+        requireNonNull(outputKeyComparator,
+                       "outputKeyComparator");
+        requireNonNull(keyMapper,
+                       "keyMapper");
+        requireNonNull(valueMapper,
+                       "valueMapper");
+        return TreeMap.fromStream(stream().duplicate()
+                                          .bimap(tupleStream1 -> tupleStream1.<KO>map(keyMapper),
+                                                 tupleStream2 -> tupleStream2.<VO>map(valueMapper))
+                                          .transform(ReactiveSeq::zip),
+                                  outputKeyComparator);
+
+
+    }
+
+    default <KO, VO> Map<KO, VO> toMutableMap(Function<? super Tuple2<K, V>, ? extends KO> keyMapper,
+                                              Function<? super Tuple2<K, V>, ? extends VO> valueMapper) {
         requireNonNull(keyMapper,
                        "keyMapper");
         requireNonNull(valueMapper,
@@ -1089,13 +1146,13 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                       valueMapper);
     }
 
-    default <KO> HashMap<KO, Tuple2<K, V>> toHashMap(Function<? super Tuple2<K, V>, ? extends KO> keyMapper) {
+    default <KO> HashMap<KO, Tuple2<K, V>> toImmutableHashMap(Function<? super Tuple2<K, V>, ? extends KO> keyMapper) {
         requireNonNull(keyMapper,
                        "keyMapper");
         return toImmutableMap().toHashMap(keyMapper);
     }
 
-    default <KO> Map<KO, Tuple2<K, V>> toMap(Function<? super Tuple2<K, V>, ? extends KO> keyMapper) {
+    default <KO> Map<KO, Tuple2<K, V>> toMutableMap(Function<? super Tuple2<K, V>, ? extends KO> keyMapper) {
         requireNonNull(keyMapper,
                        "keyMapper");
         return toImmutableMap().toMap(keyMapper);

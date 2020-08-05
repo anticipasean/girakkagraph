@@ -6,6 +6,7 @@ import cyclops.data.tuple.Tuple2;
 import cyclops.reactive.ReactiveSeq;
 import io.github.anticipasean.ent.Ent;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -41,12 +42,12 @@ public class KeyValueMatchingTest {
                                                                     (integerForm) -> "5")
                                                               .elseDefault(Tuple2.of("No match",
                                                                                      "No match"));
-        logger.info("pattern_matching_result: [ value expected: {} as {}, actual: {} as {} ]",
-                    "5",
-                    String.class,
-                    patternMatchingResult._2(),
-                    patternMatchingResult._2()
-                                         .getClass());
+        //        logger.info("pattern_matching_result: [ value expected: {} as {}, actual: {} as {} ]",
+        //                    "5",
+        //                    String.class,
+        //                    patternMatchingResult._2(),
+        //                    patternMatchingResult._2()
+        //                                         .getClass());
         Assert.assertEquals("5",
                             patternMatchingResult._2());
 
@@ -74,12 +75,12 @@ public class KeyValueMatchingTest {
                                                                                                     .toString()))
                                                               .elseDefault(Tuple2.of("noMatch",
                                                                                      "noMatch"));
-        logger.info("pattern_matching_result: [ expected: {} as {}, actual: {} as {} ]",
-                    Tuple2.of("five",
-                              "5"),
-                    Tuple2.class,
-                    patternMatchingResult,
-                    patternMatchingResult.getClass());
+        //        logger.info("pattern_matching_result: [ expected: {} as {}, actual: {} as {} ]",
+        //                    Tuple2.of("five",
+        //                              "5"),
+        //                    Tuple2.class,
+        //                    patternMatchingResult,
+        //                    patternMatchingResult.getClass());
         Assert.assertEquals(patternMatchingResult,
                             Tuple2.of("five",
                                       "5"));
@@ -106,8 +107,42 @@ public class KeyValueMatchingTest {
                                                                                                                                                .cycle(integers.size())))
                                                                          .elseDefault(Tuple2.of(Streamable.of(0),
                                                                                                 Streamable.of(0))));
-      Assert.assertEquals(ent.size(), 6, "six pairs of ints not generated: " + ent.mkString());
+        Assert.assertEquals(ent.size(),
+                            6,
+                            "six pairs of ints not generated: " + ent.mkString());
     }
 
+
+    @Test
+    public void matchPutAllTest() {
+        Seq<Tuple2<String, Number>> tuples = Seq.of("one",
+                                                    "two_float")
+                                                .zip(Seq.of(1,
+                                                            2.0F));
+        Ent<String, Number> numEnt = Ent.fromTuples(tuples);
+
+        Seq<Tuple2<String, Number>> tuples2 = Seq.of("big_int_one",
+                                                     "sixty-three_plus",
+                                                     "big_three_22")
+                                                 .zip(Seq.of(BigInteger.valueOf(1231313112323L),
+                                                             63.2F,
+                                                             BigDecimal.valueOf(3.22)));
+        Assert.assertEquals(numEnt.size(),
+                            2);
+        numEnt = numEnt.matchPutAll(tuples2,
+                                    matcher -> matcher.caseWhenKeyValue()
+                                                      .valueOfType(Integer.class)
+                                                      .then((s, integer) -> Tuple2.of(String.valueOf(integer),
+                                                                                      (Number) integer))
+                                                      .valueOfType(Float.class)
+                                                      .then((s, aFloat) -> Tuple2.of(String.valueOf(aFloat),
+                                                                                     aFloat))
+                                                      .valueOfType(BigDecimal.class)
+                                                      .then((s, bigDecimal) -> Tuple2.of(String.valueOf(bigDecimal),
+                                                                                         bigDecimal))
+                                                      .elseDefault(null));
+        Assert.assertEquals(numEnt.size(),
+                            4); // minus the BigInteger which was not covered as a possible mapping and no default value provided for it
+    }
 
 }
