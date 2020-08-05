@@ -429,6 +429,21 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                            () -> this);
     }
 
+    default <KI, VI> Ent<K, V> matchPutAll(Iterable<? extends Tuple2<KI, VI>> inputKeyValueTuples,
+                                           Pattern2<KI, VI, K, V> inputKeyValuePattern) {
+        requireNonNull(inputKeyValueTuples,
+                       "inputKeyValueTuples");
+        requireNonNull(inputKeyValuePattern,
+                       "inputKeyValuePattern");
+        return fromImmutableMap(Streamable.fromIterable(inputKeyValueTuples)
+                                          .map(tuple -> Option.ofNullable(tuple)
+                                                              .map(Pattern2.asMapper(inputKeyValuePattern)))
+                                          .filter(Option::isPresent)
+                                          .map(tupOpt -> tupOpt.orElse(null))
+                                          .foldRight(toImmutableMap(),
+                                                     (tuple, immutMap) -> immutMap.put(tuple)));
+    }
+
     /**
      * Iterable methods
      */
