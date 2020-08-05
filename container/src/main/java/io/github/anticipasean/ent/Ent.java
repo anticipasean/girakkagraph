@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -150,29 +151,33 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     static <K, V> Ent<K, V> fromImmutableMap(ImmutableMap<K, V> immutableMap) {
         return Option.ofNullable(immutableMap)
                      .fold(EntImpl::new,
-                           () -> new EntImpl<>(HashMap.empty()));
+                           Ent::empty);
     }
 
-    static <K, V> Ent<K, V> fromSortedImmutableMap(ImmutableMap<K, V> immutableMap,
-                                                   Comparator<K> keyComparator) {
+    static <K, V> Ent<K, V> fromImmutableSortedMap(ImmutableMap<K, V> immutableMap,
+                                                   Supplier<Comparator<K>> defaultKeyComparatorSupplier) {
+        requireNonNull(defaultKeyComparatorSupplier,
+                       "defaultKeyComparatorSupplier");
         return Option.ofNullable(immutableMap)
                      .filter(iMap -> TreeMap.class.isAssignableFrom(iMap.getClass()))
                      .orElseUse(Option.ofNullable(immutableMap)
-                                      .map(imap -> TreeMap.fromMap(keyComparator,
+                                      .map(imap -> TreeMap.fromMap(defaultKeyComparatorSupplier.get(),
                                                                    imap)))
                      .fold(EntImpl::new,
-                           () -> new EntImpl<>(TreeMap.empty(keyComparator)));
+                           () -> emptySorted(defaultKeyComparatorSupplier.get()));
     }
 
-    static <K, V> Ent<K, V> fromTuples(Iterable<Tuple2<K, V>> iterableOfTuples) {
+    static <K, V> Ent<K, V> fromIterable(Iterable<Tuple2<K, V>> iterableOfTuples) {
         return Option.ofNullable(iterableOfTuples)
                      .map(iter -> HashMap.fromStream(Streamable.fromIterable(iter)))
                      .fold(EntImpl::new,
-                           () -> Ent.empty());
+                           Ent::empty);
     }
 
-    static <K, V> Ent<K, V> fromSortedTuples(Iterable<Tuple2<K, V>> iterableOfTuples,
-                                             Comparator<K> keyComparator) {
+    static <K, V> Ent<K, V> fromSortedIterable(Iterable<Tuple2<K, V>> iterableOfTuples,
+                                               Comparator<K> keyComparator) {
+        requireNonNull(keyComparator,
+                       "keyComparator");
         return Option.ofNullable(iterableOfTuples)
                      .map(iter -> TreeMap.fromStream(Streamable.fromIterable(iter),
                                                      keyComparator))
@@ -180,8 +185,66 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                            () -> Ent.emptySorted(keyComparator));
     }
 
+    static <K, V> Ent<K, V> fromValueIterable(Iterable<V> valueIterable,
+                                              Function<V, K> keyExtractor) {
+        requireNonNull(keyExtractor,
+                       "keyExtractor");
+        return fromIterable(Option.fromNullable(valueIterable)
+                                  .fold(vIterable -> ReactiveSeq.fromIterable(valueIterable)
+                                                                .map(v -> Tuple2.of(keyExtractor.apply(v),
+                                                                                    v)),
+                                        ReactiveSeq::empty));
+    }
+
+    static <K, V> Ent<K, V> fromValueStream(Stream<V> valueStream,
+                                            Function<V, K> keyExtractor) {
+        requireNonNull(keyExtractor,
+                       "keyExtractor");
+        return fromIterable(Option.fromNullable(valueStream)
+                                  .map(vStream -> vStream.map(v -> Tuple2.of(keyExtractor.apply(v),
+                                                                             v)))
+                                  .fold(ReactiveSeq::fromStream,
+                                        ReactiveSeq::empty));
+    }
+
+    static <K, V> Ent<K, V> fromKeyValueStreams(Stream<K> keyStream,
+                                                Stream<V> valueStream) {
+        return fromIterable(Option.fromNullable(keyStream)
+                                  .zip(Option.ofNullable(valueStream))
+                                  .fold(streamStreamTuple2 -> ReactiveSeq.fromStream(streamStreamTuple2._1())
+                                                                         .zipWithStream(streamStreamTuple2._2(),
+                                                                                        Tuple2::<K, V>of),
+                                        ReactiveSeq::empty));
+    }
+
+    static <K, V> Ent<K, V> fromMutableMap(Map<? extends K, ? extends V> mutableMap) {
+        return fromIterable(Option.fromNullable(mutableMap)
+                                  .map(Map::entrySet)
+                                  .map(ReactiveSeq::fromIterable)
+                                  .map(entries -> entries.map(entry -> Tuple2.<K, V>of(entry.getKey(),
+                                                                                       entry.getValue())))
+                                  .fold(entries -> entries,
+                                        ReactiveSeq::empty));
+
+    }
+
+    static <K, V> Ent<K, V> fromMutableSortedMap(NavigableMap<? extends K, ? extends V> mutableSortedMap,
+                                                 Comparator<K> keyComparator) {
+        requireNonNull(keyComparator,
+                       "keyComparator");
+        return fromSortedIterable(Option.fromNullable(mutableSortedMap)
+                                        .map(Map::entrySet)
+                                        .map(ReactiveSeq::fromIterable)
+                                        .map(entries -> entries.map(entry -> Tuple2.<K, V>of(entry.getKey(),
+                                                                                             entry.getValue())))
+                                        .fold(entries -> entries,
+                                              ReactiveSeq::empty),
+                                  keyComparator);
+
+    }
+
     /**
-     * Ent backing data structure
+     * Accessor disguised as a transformation method for ent's backing data structure
      */
     ImmutableMap<K, V> toImmutableMap();
 

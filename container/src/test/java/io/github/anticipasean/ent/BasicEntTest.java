@@ -64,7 +64,7 @@ public class BasicEntTest {
                                                             1.5f,
                                                             2.5f,
                                                             10));
-        Ent<String, Number> numberEnt = Ent.fromTuples(tuples);
+        Ent<String, Number> numberEnt = Ent.fromIterable(tuples);
         Integer sumOfIntegers = numberEnt.matchFold(0,
                                                     matcher -> matcher.caseWhenKeyValue()
                                                                       .valueOfType(Integer.class)
@@ -88,7 +88,7 @@ public class BasicEntTest {
                                                             1.5f,
                                                             2.5f,
                                                             10));
-        Ent<String, Number> numberEnt = Ent.fromTuples(tuples);
+        Ent<String, Number> numberEnt = Ent.fromIterable(tuples);
         Option<Integer> integerSumOpt = numberEnt.matchFold(Option.<Integer>none(),
                                                             matcher -> matcher.caseWhenKeyValue()
                                                                               .valueOfType(Integer.class)
@@ -115,7 +115,7 @@ public class BasicEntTest {
                                                             1.5f,
                                                             2.5f,
                                                             10));
-        Ent<String, Number> numberEnt = Ent.fromTuples(tuples);
+        Ent<String, Number> numberEnt = Ent.fromIterable(tuples);
         Integer integerSum = numberEnt.matchFoldValues(0,
                                                        matcher -> matcher.caseWhenValue()
                                                                          .isOfType(Integer.class)

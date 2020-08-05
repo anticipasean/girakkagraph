@@ -99,7 +99,7 @@ public class KeyValueMatchingTest {
                                                                                     5,
                                                                                     6)));
 
-        Ent<Integer, Integer> ent = Ent.fromTuples(tuples)
+        Ent<Integer, Integer> ent = Ent.fromIterable(tuples)
                                        .matchConcatMap(matcher -> matcher.caseWhenKeyValue()
                                                                          .keyFits(integer -> integer > 10)
                                                                          .then((integer, integers) -> Tuple2.of((Iterable<Integer>) integers,
@@ -119,7 +119,7 @@ public class KeyValueMatchingTest {
                                                     "two_float")
                                                 .zip(Seq.of(1,
                                                             2.0F));
-        Ent<String, Number> numEnt = Ent.fromTuples(tuples);
+        Ent<String, Number> numEnt = Ent.fromIterable(tuples);
 
         Seq<Tuple2<String, Number>> tuples2 = Seq.of("big_int_one",
                                                      "sixty-three_plus",
