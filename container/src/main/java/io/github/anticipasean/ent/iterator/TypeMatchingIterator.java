@@ -1,7 +1,7 @@
 package io.github.anticipasean.ent.iterator;
 
 import cyclops.control.Option;
-import io.github.anticipasean.ent.func.VariantMapper;
+import io.github.anticipasean.ent.pattern.VariantMapper;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;

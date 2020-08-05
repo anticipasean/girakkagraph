@@ -1,13 +1,11 @@
 package io.github.anticipasean.ent;
 
 import cyclops.control.Option;
-import cyclops.data.tuple.Tuple2;
-import io.github.anticipasean.ent.func.Matcher;
+import io.github.anticipasean.ent.pattern.Matcher;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
