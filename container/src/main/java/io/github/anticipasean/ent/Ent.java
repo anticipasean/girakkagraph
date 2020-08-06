@@ -463,10 +463,10 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                      .apply(tuple2._2())));
     }
 
-    default <U, KO, VO> U matchFoldLeft(Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern,
-                                        U identity,
-                                        BiFunction<U, ? super Tuple2<KO, VO>, U> accumulator,
-                                        BinaryOperator<U> combiner) {
+    default <R, KO, VO> R matchFoldLeft(Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern,
+                                        R identity,
+                                        BiFunction<R, ? super Tuple2<KO, VO>, R> accumulator,
+                                        BinaryOperator<R> combiner) {
         requireNonNull(identity,
                        "identity");
         requireNonNull(keyValuePattern,
@@ -476,8 +476,8 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
         requireNonNull(combiner,
                        "combiner");
         return toImmutableMap().foldLeft(identity,
-                                         (u, kvtuple) -> Pattern2.asMapper(keyValuePattern)
-                                                                 .andThen(outputTuple -> accumulator.apply(u,
+                                         (r, kvtuple) -> Pattern2.asMapper(keyValuePattern)
+                                                                 .andThen(outputTuple -> accumulator.apply(r,
                                                                                                            outputTuple))
                                                                  .apply(kvtuple),
                                          combiner);
@@ -501,6 +501,111 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                            .andThen(kovoTuple -> mapper.apply(kovoTuple._1(),
                                                                                                               kovoTuple._2()))
                                                                            .apply(kvTuple)));
+    }
+
+    default <VO, R> R matchFoldLeftValues(Function1<Matcher1<V>, VO> valuePattern,
+                                          R identity,
+                                          BiFunction<R, VO, R> accumulator,
+                                          BinaryOperator<R> combiner) {
+        requireNonNull(valuePattern,
+                       "valuePattern");
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        requireNonNull(combiner,
+                       "combiner");
+        return toImmutableMap().foldLeft(identity,
+                                         (r, kvTuple) -> Pattern1.asMapper(valuePattern)
+                                                                 .andThen(vo -> accumulator.apply(r,
+                                                                                                  vo))
+                                                                 .apply(kvTuple._2()),
+                                         combiner);
+    }
+
+    default <KO, R> R matchFoldLeftKeys(Function1<Matcher1<K>, KO> keyPattern,
+                                        R identity,
+                                        BiFunction<R, KO, R> accumulator,
+                                        BinaryOperator<R> combiner) {
+        requireNonNull(keyPattern,
+                       "keyPattern");
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        requireNonNull(combiner,
+                       "combiner");
+        return toImmutableMap().foldLeft(identity,
+                                         (r, kvTuple) -> Pattern1.asMapper(keyPattern)
+                                                                 .andThen(ko -> accumulator.apply(r,
+                                                                                                  ko))
+                                                                 .apply(kvTuple._1()),
+                                         combiner);
+    }
+
+    default <VO, R> R matchFoldRightValues(Function1<Matcher1<V>, VO> valuePattern,
+                                           R identity,
+                                           BiFunction<? super VO, ? super R, ? extends R> accumulator) {
+        requireNonNull(valuePattern,
+                       "valuePattern");
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldRight(identity,
+                                          (kvTuple, r) -> Pattern1.asMapper(valuePattern)
+                                                                  .andThen(vo -> accumulator.apply(vo,
+                                                                                                   r))
+                                                                  .apply(kvTuple._2()));
+    }
+
+    default <KO, R> R matchFoldRightKeys(Function1<Matcher1<K>, KO> keyPattern,
+                                         R identity,
+                                         BiFunction<? super KO, ? super R, ? extends R> accumulator) {
+        requireNonNull(keyPattern,
+                       "keyPattern");
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldRight(identity,
+                                          (kvTuple, r) -> Pattern1.asMapper(keyPattern)
+                                                                  .andThen(ko -> accumulator.apply(ko,
+                                                                                                   r))
+                                                                  .apply(kvTuple._1()));
+    }
+
+
+    default <VO> VO matchFoldLeftValues(Function1<Matcher1<V>, VO> valuePattern,
+                                        VO identity,
+                                        BinaryOperator<VO> accumulator) {
+        requireNonNull(valuePattern,
+                       "valuePattern");
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldLeft(identity,
+                                         (vo, kvTuple) -> Pattern1.asMapper(valuePattern)
+                                                                  .andThen(outputVO -> accumulator.apply(vo,
+                                                                                                         outputVO))
+                                                                  .apply(kvTuple._2()));
+    }
+
+    default <VO> VO matchFoldRightValues(Function1<Matcher1<V>, VO> valuePattern,
+                                         VO identity,
+                                         BinaryOperator<VO> accumulator) {
+        requireNonNull(valuePattern,
+                       "valuePattern");
+        requireNonNull(identity,
+                       "identity");
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldRight(identity,
+                                          (kvTuple, vo) -> Pattern1.asMapper(valuePattern)
+                                                                   .andThen(voOutput -> accumulator.apply(voOutput,
+                                                                                                          vo))
+                                                                   .apply(kvTuple._2()));
     }
 
     default <VI> Ent<K, V> matchPut(K key,
@@ -842,8 +947,8 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
         return toImmutableMap().foldLeft(accumulator);
     }
 
-    default <U> U foldLeft(U identity,
-                           BiFunction<U, ? super Tuple2<K, V>, U> accumulator) {
+    default <R> R foldLeft(R identity,
+                           BiFunction<R, ? super Tuple2<K, V>, R> accumulator) {
         requireNonNull(identity,
                        "identity");
         requireNonNull(accumulator,
@@ -852,9 +957,9 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                          accumulator);
     }
 
-    default <U> U foldLeft(U identity,
-                           BiFunction<U, ? super Tuple2<K, V>, U> accumulator,
-                           BinaryOperator<U> combiner) {
+    default <R> R foldLeft(R identity,
+                           BiFunction<R, ? super Tuple2<K, V>, R> accumulator,
+                           BinaryOperator<R> combiner) {
         requireNonNull(identity,
                        "identity");
         requireNonNull(accumulator,
@@ -886,8 +991,8 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                           accumulator);
     }
 
-    default <U> U foldRight(U identity,
-                            BiFunction<? super Tuple2<K, V>, ? super U, ? extends U> accumulator) {
+    default <R> R foldRight(R identity,
+                            BiFunction<? super Tuple2<K, V>, ? super R, ? extends R> accumulator) {
         requireNonNull(identity,
                        "identity");
         requireNonNull(accumulator,
