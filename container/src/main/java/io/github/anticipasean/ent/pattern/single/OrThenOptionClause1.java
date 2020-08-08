@@ -1,5 +1,6 @@
 package io.github.anticipasean.ent.pattern.single;
 
+import cyclops.control.Either;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.pattern.Clause;
@@ -21,9 +22,9 @@ public interface OrThenOptionClause1<V, I, O> extends Clause<MatchResult1<V, Opt
         return OrMatchClause1.of(() -> MatchResult1.of(subject().either()
                                                                 .mapLeft(Tuple2::_2)
                                                                 .mapLeft(optOpt -> optOpt.map(mapper))
-                                                                .flatMapLeft(outputOpt -> outputOpt.toEither(Tuple2.of(subject().either()
-                                                                                                                                .leftOrElse(null)
-                                                                                                                                ._1(),
-                                                                                                                       Option.none())))));
+                                                                .fold(oOpt -> oOpt.toEither(Tuple2.of(subject().unapply()
+                                                                                                               ._1(),
+                                                                                                      Option.none())),
+                                                                      Either::right)));
     }
 }

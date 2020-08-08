@@ -109,7 +109,7 @@ public class ValuePatternMatchingTest {
     }
 
     @Test
-    public void typeMatchPositiveOptionTest() {
+    public void typeMatchPositiveResultOptionTest() {
 
         Option<BigDecimal> bigDec = Matcher.caseWhen(40)
                                            .isOfType(BigDecimal.class)
@@ -118,57 +118,94 @@ public class ValuePatternMatchingTest {
                                            .then(integer -> BigDecimal.valueOf(integer))
                                            .isOfType(Float.class)
                                            .then(aFloat -> BigDecimal.valueOf(2.2))
-                                           .elseNullable();
+                                           .elseOption();
         Assert.assertTrue(bigDec.isPresent());
     }
 
     @Test
-    public void typeMatchNegativeOptionTest() {
+    public void typeMatchNegativeResultOptionTest() {
 
         Option<BigDecimal> bigDec = Matcher.caseWhen(BigInteger.valueOf(20))
                                            .isOfType(BigDecimal.class)
                                            .then(bigDecimal -> BigDecimal.TEN)
                                            .isOfType(Integer.class)
-                                           .then(integer -> BigDecimal.valueOf(integer))
+                                           .then(BigDecimal::valueOf)
                                            .isOfType(Float.class)
                                            .then(aFloat -> BigDecimal.valueOf(2.2))
-                                           .elseNullable();
+                                           .elseOption();
         Assert.assertFalse(bigDec.isPresent());
     }
 
-    //    @Test
-    //    public void functionalMatchIsSameTypeAsPositiveTest() {
-    //        String resultStr = Matcher.caseWhen(Tuple2.of("blah",
-    //                                              "la"))
-    //                          .isSameTypeAs(Tuple2.of(1,
-    //                                                  2))
-    //                          .then(integerIntegerTuple2 -> integerIntegerTuple2.toString())
-    //                          .isSameTypeAs(Tuple2.of("re",
-    //                                                  "rah"))
-    //                          .then(stringStringTuple2 -> stringStringTuple2.toString())
-    //                          .isSameTypeAs(Tuple2.of(12.23f,
-    //                                                  1.2f))
-    //                          .then(floatFloatTuple2 -> floatFloatTuple2.toString())
-    //                          .orElse("No match");
-    //        logger.info(HashMap.of("actual", resultStr, "expected", Tuple2.of("blah", "la").toString()).mkString());
-    //        Assert.assertEquals(Tuple2.of("blah", "la").toString(), resultStr);
-    //    }
-    //
-    //    @Test
-    //    public void functionalMatchIsSameTypeAsNegativeTest() {
-    //        String resultStr = Matcher.caseWhen(Tuple2.of("blah",
-    //                                                      2))
-    //                                  .isSameTypeAs(Tuple2.of(1,
-    //                                                          2))
-    //                                  .then(integerIntegerTuple2 -> integerIntegerTuple2.toString())
-    //                                  .isSameTypeAs(Tuple2.of("re",
-    //                                                          "rah"))
-    //                                  .then(stringStringTuple2 -> stringStringTuple2.toString())
-    //                                  .isSameTypeAs(Tuple2.of(12.23f,
-    //                                                          1.2f))
-    //                                  .then(floatFloatTuple2 -> floatFloatTuple2.toString())
-    //                                  .orElse("No match");
-    //        logger.info(HashMap.of("actual", resultStr, "expected", "No match").mkString());
-    //        Assert.assertEquals(resultStr, "No match");
-    //    }
+    @Test
+    public void optionTypeMatchPositiveTest() {
+        Option<Number> numberOpt = Matcher.caseWhen(Option.of(40))
+                                          .isOfType(BigDecimal.class)
+                                          .then(bigDecimal -> (Number) BigDecimal.TEN)
+                                          .isOfType(Integer.class)
+                                          .then(integer -> 32)
+                                          .isOptionOfType(Integer.class)
+                                          .then(intOpt -> intOpt.map(i -> i + 2)
+                                                                .orElse(-1))
+                                          .isOfType(Float.class)
+                                          .then(aFloat -> 2.2f)
+                                          .isOptionOfType(BigDecimal.class)
+                                          .then(bigDecOpt -> bigDecOpt.orElse(BigDecimal.ZERO))
+                                          .elseOption();
+        Assert.assertTrue(numberOpt.isPresent() && numberOpt.orElse(-3)
+                                                            .intValue() == 42,
+                          "number option return value does not match option of 42: [ actual: " + numberOpt.mkString() + " ]");
+    }
+
+    @Test
+    public void optionTypeMatchNegativeTest() {
+        Option<Number> numberOpt = Matcher.caseWhen(Option.of(40))
+                                          .isOfType(BigDecimal.class)
+                                          .then(bigDecimal -> (Number) BigDecimal.TEN)
+                                          .isOfType(Integer.class)
+                                          .then(integer -> 32)
+                                          .isOfType(Float.class)
+                                          .then(aFloat -> 2.2f)
+                                          .isOptionOfType(BigDecimal.class)
+                                          .then(bigDecOpt -> bigDecOpt.orElse(BigDecimal.ZERO))
+                                          .elseOption();
+        Assert.assertFalse(numberOpt.isPresent(),
+                           "number option not expected to return a value: [ actual: " + numberOpt.mkString() + " ]");
+    }
+
+    @Test
+    public void optionTypeMatchAsFirstClausePositiveTest() {
+        Option<Number> numberOpt = Matcher.caseWhen(Option.of(40))
+                                          .isOptionOfType(Integer.class)
+                                          .then(intOpt -> (Number) intOpt.map(i -> i + 2)
+                                                                .orElse(-1))
+                                          .isOfType(BigDecimal.class)
+                                          .then(bigDecimal -> (Number) BigDecimal.TEN)
+                                          .isOfType(Integer.class)
+                                          .then(integer -> 32)
+                                          .isOfType(Float.class)
+                                          .then(aFloat -> 2.2f)
+                                          .isOptionOfType(BigDecimal.class)
+                                          .then(bigDecOpt -> bigDecOpt.orElse(BigDecimal.ZERO))
+                                          .elseOption();
+        Assert.assertTrue(numberOpt.isPresent() && numberOpt.orElse(-3)
+                                                            .intValue() == 42,
+                          "number option return value does not match option of 42: [ actual: " + numberOpt.mkString() + " ]");
+    }
+
+    @Test
+    public void optionTypeMatchAsFirstClauseNegativeTest() {
+        Option<Number> numberOpt = Matcher.caseWhen(Option.of(40))
+                                          .isOptionOfType(BigDecimal.class)
+                                          .then(bigDecOpt -> (Number) bigDecOpt.orElse(BigDecimal.ZERO))
+                                          .isOfType(BigDecimal.class)
+                                          .then(bigDecimal -> BigDecimal.TEN)
+                                          .isOfType(Integer.class)
+                                          .then(integer -> 32)
+                                          .isOfType(Float.class)
+                                          .then(aFloat -> 2.2f)
+                                          .elseOption();
+        Assert.assertFalse(numberOpt.isPresent(),
+                           "number option not expected to return a value: [ actual: " + numberOpt.mkString() + " ]");
+    }
+
 }

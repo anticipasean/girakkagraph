@@ -89,10 +89,8 @@ public class TypeMatchingIterableTest {
                             Integer.valueOf(3));
         Assert.assertEquals(integerIterator1.next(),
                             Integer.valueOf(5));
-        LoggerFactory.getLogger(TypeMatchingIterableTest.class).info("iter: " + integerIterator1);
         Try<Integer, NoSuchElementException> iterTry = Try.withCatch(() -> integerIterator1.next(),
                                                                       NoSuchElementException.class);
-        LoggerFactory.getLogger(TypeMatchingIterableTest.class).info("iter_try: " + iterTry.failureGet());
         Assert.assertTrue(iterTry.isFailure(),
                           "iterator did not throw expected NoSuchElementException when next called after last element.");
     }

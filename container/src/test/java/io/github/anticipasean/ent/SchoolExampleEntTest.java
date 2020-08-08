@@ -107,7 +107,7 @@ public class SchoolExampleEntTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked") // necessary for the varargs use on ReactiveSeq.concat with -Xlint:unchecked option on
     public void getStudentExamResults() {
         Student student1 = SchoolExample.student1();
         Ent<Long, ExamResult> examResults = Ent.fromValuesIterable(ReactiveSeq.concat(SchoolExample.calculus3Exam1Results()
@@ -117,12 +117,14 @@ public class SchoolExampleEntTest {
                                                                                       SchoolExample.philosophyExam2Results()
                                                                                                    .stream()),
                                                                    ExamResult::id);
-        System.out.println(examResults.mkString());
+//        System.out.println(examResults.mkString());
         double student1ExamScoresMean = examResults.filterValues(examResult -> examResult.studentId()
                                                                                          .equals(student1.id()))
                                                    .mean(longExamResultTuple2 -> longExamResultTuple2._2()
                                                                                                      .score());
-        System.out.println(student1ExamScoresMean);
+
+        Assert.assertTrue(student1ExamScoresMean < 0.734 && student1ExamScoresMean > 0.733,
+                          "student1 exam scores mean does not approximate expected value");
     }
 
 }

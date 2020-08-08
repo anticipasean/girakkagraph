@@ -87,26 +87,30 @@ public interface MatchClause1<V> extends Clause<V> {
                                                                         Option.none())));
     }
 
+    @SuppressWarnings("unchecked")
     default <I> ThenOptionClause1<V, I> isOptionOfType(Class<I> inputType) {
         return ThenOptionClause1.of(() -> Option.of(subject())
                                                 .flatMap(VariantMapper.inputTypeMapper(Option.class))
-                                                .map(VariantMapper.inputTypeMapper(inputType))
+                                                .map(option -> option.orElse(null))
+                                                .map(o -> Option.ofNullable(o)
+                                                                .flatMap(VariantMapper.inputTypeMapper(inputType)))
                                                 .fold(option -> Tuple2.of(subject(),
-                                                                          Option.some(option)),
+                                                                          Option.some(option).filter(Option::isPresent)),
                                                       () -> Tuple2.of(subject(),
                                                                       Option.none())));
     }
 
+    @SuppressWarnings("unchecked")
     default <I> ThenOptionClause1<V, I> isOptionOfTypeAnd(Class<I> inputType,
-                                                          Predicate<Option<I>> condition) {
+                                                          Predicate<I> condition) {
         return ThenOptionClause1.of(() -> Option.of(subject())
                                                 .flatMap(VariantMapper.inputTypeMapper(Option.class))
-                                                .map(VariantMapper.inputTypeMapper(inputType))
-                                                .map(inputOpt -> Option.of(inputOpt)
-                                                                       .filter(condition)
-                                                                       .orElse(Option.none()))
+                                                .map(option -> option.orElse(null))
+                                                .map(o -> Option.ofNullable(o)
+                                                                .flatMap(VariantMapper.inputTypeMapper(inputType))
+                                                                .filter(condition))
                                                 .fold(option -> Tuple2.of(subject(),
-                                                                          Option.some(option)),
+                                                                          Option.some(option).filter(Option::isPresent)),
                                                       () -> Tuple2.of(subject(),
                                                                       Option.none())));
     }
