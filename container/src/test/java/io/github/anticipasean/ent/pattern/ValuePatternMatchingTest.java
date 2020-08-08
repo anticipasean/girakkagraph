@@ -90,7 +90,7 @@ public class ValuePatternMatchingTest {
                                    .then(aFloat -> BigDecimal.valueOf(2.2))
                                    .elseDefault(BigDecimal.ONE);
         Assert.assertEquals(bigDec,
-                            BigDecimal.valueOf(40));
+                            BigDecimal.valueOf(40), "type was supposed to have a match");
     }
 
     @Test
@@ -105,7 +105,7 @@ public class ValuePatternMatchingTest {
                                    .then(aFloat -> BigDecimal.valueOf(2.2))
                                    .elseDefault(BigDecimal.ONE);
         Assert.assertEquals(bigDec,
-                            BigDecimal.ONE);
+                            BigDecimal.ONE, "type was not supposed to have a match and use default instead");
     }
 
     @Test
@@ -133,7 +133,7 @@ public class ValuePatternMatchingTest {
                                            .isOfType(Float.class)
                                            .then(aFloat -> BigDecimal.valueOf(2.2))
                                            .elseOption();
-        Assert.assertFalse(bigDec.isPresent());
+        Assert.assertFalse(bigDec.isPresent(), "no result option was expected");
     }
 
     @Test
@@ -197,8 +197,8 @@ public class ValuePatternMatchingTest {
         Option<Number> numberOpt = Matcher.caseWhen(Option.of(40))
                                           .isOptionOfType(BigDecimal.class)
                                           .then(bigDecOpt -> (Number) bigDecOpt.orElse(BigDecimal.ZERO))
-                                          .isOfType(BigDecimal.class)
-                                          .then(bigDecimal -> BigDecimal.TEN)
+                                          .isOptionOfType(Float.class)
+                                          .then(floatOption -> floatOption.orElse(1.1f))
                                           .isOfType(Integer.class)
                                           .then(integer -> 32)
                                           .isOfType(Float.class)

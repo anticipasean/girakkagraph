@@ -1,5 +1,6 @@
 package io.github.anticipasean.ent.pattern;
 
+import cyclops.control.Option;
 import cyclops.data.Seq;
 import cyclops.data.tuple.Tuple2;
 import cyclops.reactive.ReactiveSeq;
@@ -147,4 +148,104 @@ public class KeyValueMatchingTest {
                             4); // minus the BigInteger which was not covered as a possible mapping and no default value provided for it
     }
 
+    @Test
+    public void optionClausePositiveMatchTest() {
+
+        Object doubleOptionUpcast = Option.of(1231.122D);
+
+        Tuple2<Integer, Number> integerNumberTuple2 = Matcher.of(Tuple2.of(25,
+                                                                           doubleOptionUpcast))
+                                                             .caseWhenKeyValue()
+                                                             .valueOptionOfType(Integer.class)
+                                                             .then(integerOptionTuple2 -> integerOptionTuple2.map2(opt -> (Number) opt.orElse(-12)))
+                                                             .valueFits(o -> o.equals(Integer.valueOf(9234)))
+                                                             .then(integerDoubleTuple2 -> integerDoubleTuple2.map2(aDouble -> (Number) aDouble))
+                                                             .valueOptionOfType(Double.class)
+                                                             .then(integerOptionTuple2 -> integerOptionTuple2.map2(doubles -> (Number) doubles.orElse(1.2D)))
+                                                             .valueOptionOfType(BigDecimal.class)
+                                                             .then((integer, bigDecimals) -> Tuple2.of(integer,
+                                                                                                       (Number) BigDecimal.TEN))
+                                                             .elseDefault(Tuple2.of(123,
+                                                                                    78));
+        Assert.assertEquals(integerNumberTuple2._2()
+                                               .doubleValue(),
+                            1231.122D);
+    }
+
+    @Test
+    public void optionClauseNegativeMatchTest() {
+
+        Object doubleOptionUpcast = Option.of(1231.122D);
+
+        Tuple2<Integer, Number> integerNumberTuple2 = Matcher.of(Tuple2.of(25,
+                                                                           doubleOptionUpcast))
+                                                             .caseWhenKeyValue()
+                                                             .valueOptionOfType(Integer.class)
+                                                             .then(integerOptionTuple2 -> integerOptionTuple2.map2(opt -> (Number) opt.orElse(-12)))
+                                                             .valueFits(o -> o.equals(Integer.valueOf(9234)))
+                                                             .then(integerDoubleTuple2 -> integerDoubleTuple2.map2(aDouble -> (Number) aDouble))
+                                                             .valueOptionOfType(Float.class)
+                                                             .then(intFloatOptTuple -> intFloatOptTuple.map2(floatValOpt -> (Number) floatValOpt.orElse(1.2F)))
+                                                             .valueOptionOfType(BigDecimal.class)
+                                                             .then((integer, bigDecimals) -> Tuple2.of(integer,
+                                                                                                       (Number) BigDecimal.TEN))
+                                                             .elseDefault(Tuple2.of(123,
+                                                                                    78));
+        Assert.assertEquals(integerNumberTuple2._2()
+                                               .doubleValue(),
+                            78.0D,
+                            "no match was expected for this pattern so the default was expected");
+    }
+
+    @Test
+    public void optionClausePositiveMatchFirstClauseTest() {
+
+        Object doubleOptionUpcast = Option.of(1231.122D);
+
+        Tuple2<Integer, Number> integerNumberTuple2 = Matcher.of(Tuple2.of(25,
+                                                                           doubleOptionUpcast))
+                                                             .caseWhenKeyValue()
+                                                             .valueOptionOfType(Double.class)
+                                                             .then(integerOptionTuple2 -> integerOptionTuple2.map2(doubles -> (Number) doubles.orElse(1.2D)))
+                                                             .valueOptionOfType(Integer.class)
+                                                             .then(integerOptionTuple2 -> integerOptionTuple2.map2(opt -> (Number) opt.orElse(-12)))
+                                                             .valueFits(o -> o.equals(Integer.valueOf(9234)))
+                                                             .then(integerDoubleTuple2 -> integerDoubleTuple2.map2(aDouble -> (Number) aDouble))
+                                                             .valueOptionOfType(BigDecimal.class)
+                                                             .then((integer, bigDecimals) -> Tuple2.of(integer,
+                                                                                                       (Number) BigDecimal.TEN))
+                                                             .elseDefault(Tuple2.of(123,
+                                                                                    78));
+        Assert.assertEquals(integerNumberTuple2._2()
+                                               .doubleValue(),
+                            1231.122D);
+    }
+
+    @Test
+    public void optionClauseNegativeMatchFirstClauseTest() {
+
+        Object doubleOptionUpcast = Option.of(1231.122D);
+
+        Tuple2<Integer, Number> integerNumberTuple2 = Matcher.of(Tuple2.of(25,
+                                                                           doubleOptionUpcast))
+                                                             .caseWhenKeyValue()
+                                                             .valueOptionOfType(BigDecimal.class)
+                                                             .then((integer, bigDecimals) -> Tuple2.of(integer,
+                                                                                                       (Number) BigDecimal.TEN))
+                                                             .valueFits(o -> o.equals(Integer.valueOf(22)))
+                                                             .then((integer, o) -> Tuple2.of(integer,
+                                                                                             (Number) 79))
+                                                             .valueOptionOfType(Integer.class)
+                                                             .then(integerOptionTuple2 -> integerOptionTuple2.map2(opt -> (Number) opt.orElse(-12)))
+                                                             .valueFits(o -> o.equals(Integer.valueOf(9234)))
+                                                             .then(integerDoubleTuple2 -> integerDoubleTuple2.map2(aDouble -> (Number) aDouble))
+                                                             .valueOptionOfType(Float.class)
+                                                             .then(intFloatOptTuple -> intFloatOptTuple.map2(floatValOpt -> (Number) floatValOpt.orElse(1.2F)))
+                                                             .elseDefault(Tuple2.of(123,
+                                                                                    78));
+        Assert.assertEquals(integerNumberTuple2._2()
+                                               .doubleValue(),
+                            78.0D,
+                            "no match was expected for this pattern so the default was expected");
+    }
 }

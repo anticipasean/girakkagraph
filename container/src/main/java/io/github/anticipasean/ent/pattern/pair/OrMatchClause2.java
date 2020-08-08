@@ -248,40 +248,55 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
                                                                                                                                              viIterable))))));
     }
 
+    @SuppressWarnings("unchecked")
     default <VI> OrThenOptionClause2<K, V, K, VI, KO, VO> valueOptionOfType(Class<VI> inputType) {
+        /*
+         * OptionClauses require flattening (or de-nesting Option<Option<...) to their contained objects and conversion back into
+         * option form after it is determined whether the contained object fits the case's input type when used within this Either
+         * monad logic in order to avoid ambiguity when casting to the supplied input type
+         */
         return OrThenOptionClause2.of(() -> MatchResult2.of(subject().either()
                                                                      .mapLeft(Tuple2::_1)
                                                                      .mapLeft(Tuple2::_2)
-                                                                     .mapLeft(VariantMapper.inputTypeMapper(Option.class))
-                                                                     .mapLeft(optOpt -> optOpt.flatMap(VariantMapper.inputTypeMapper(inputType)))
-                                                                     .mapLeft(viOpt -> Tuple2.of(subject().either()
-                                                                                                          .leftOrElse(null)
-                                                                                                          ._1(),
-                                                                                                 Option.of(viOpt)
-                                                                                                       .map(viOpt1 -> Tuple2.of(subject().unapply()
-                                                                                                                                         ._1()
-                                                                                                                                         ._1(),
-                                                                                                                                viOpt1))))));
+                                                                     .mapLeft(v -> Option.of(v)
+                                                                                         .flatMap(VariantMapper.inputTypeMapper(Option.class)))
+                                                                     .mapLeft(optOpt -> optOpt.orElse(Option.none()))
+                                                                     .mapLeft(option -> option.orElse(null))
+                                                                     .mapLeft(o -> Option.ofNullable(o)
+                                                                                         .flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                                     .fold(viOpt -> Either.left(Tuple2.of(subject().unapply()
+                                                                                                                   ._1(),
+                                                                                                          Option.of(viOpt)
+                                                                                                                .filter(Option::isPresent)
+                                                                                                                .map(vi -> Tuple2.of(subject().unapply()
+                                                                                                                                              ._1()
+                                                                                                                                              ._1(),
+                                                                                                                                     vi)))),
+                                                                           Either::right)));
     }
 
+    @SuppressWarnings("unchecked")
     default <VI> OrThenOptionClause2<K, V, K, VI, KO, VO> valueOptionOfTypeAnd(Class<VI> inputType,
                                                                                Predicate<Option<VI>> condition) {
         return OrThenOptionClause2.of(() -> MatchResult2.of(subject().either()
                                                                      .mapLeft(Tuple2::_1)
                                                                      .mapLeft(Tuple2::_2)
-                                                                     .mapLeft(VariantMapper.inputTypeMapper(Option.class))
-                                                                     .mapLeft(optOpt -> optOpt.flatMap(VariantMapper.inputTypeMapper(inputType)))
-                                                                     .mapLeft(viOpt -> Option.of(viOpt)
-                                                                                             .filter(condition)
-                                                                                             .orElse(Option.none()))
-                                                                     .mapLeft(viOpt -> Tuple2.of(subject().either()
-                                                                                                          .leftOrElse(null)
-                                                                                                          ._1(),
-                                                                                                 Option.of(viOpt)
-                                                                                                       .map(viOpt1 -> Tuple2.of(subject().unapply()
-                                                                                                                                         ._1()
-                                                                                                                                         ._1(),
-                                                                                                                                viOpt1))))));
+                                                                     .mapLeft(v -> Option.of(v)
+                                                                                         .flatMap(VariantMapper.inputTypeMapper(Option.class)))
+                                                                     .mapLeft(optOpt -> optOpt.orElse(Option.none()))
+                                                                     .mapLeft(option -> option.orElse(null))
+                                                                     .mapLeft(o -> Option.ofNullable(o)
+                                                                                         .flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                                     .fold(viOpt -> Either.left(Tuple2.of(subject().unapply()
+                                                                                                                   ._1(),
+                                                                                                          Option.of(viOpt)
+                                                                                                                .filter(Option::isPresent)
+                                                                                                                .filter(condition)
+                                                                                                                .map(vi -> Tuple2.of(subject().unapply()
+                                                                                                                                              ._1()
+                                                                                                                                              ._1(),
+                                                                                                                                     vi)))),
+                                                                           Either::right)));
     }
 
     default <KI> OrThenClause2<K, V, KI, V, KO, VO> keyMapsTo(Function<K, Option<KI>> keyMapper) {
@@ -390,13 +405,13 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
                                           null));
     }
 
-    default Option<KO> elseYieldKey() {
+    default Option<KO> elseKeyOption() {
         return subject().either()
                         .toOption()
                         .map(Tuple2::_1);
     }
 
-    default Option<VO> elseYieldValue() {
+    default Option<VO> elseValueOption() {
         return subject().either()
                         .toOption()
                         .map(Tuple2::_2);

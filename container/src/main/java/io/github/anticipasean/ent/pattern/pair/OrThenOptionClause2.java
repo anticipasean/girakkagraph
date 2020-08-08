@@ -1,5 +1,6 @@
 package io.github.anticipasean.ent.pattern.pair;
 
+import cyclops.control.Either;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
 import io.github.anticipasean.ent.pattern.Clause;
@@ -22,10 +23,10 @@ public interface OrThenOptionClause2<K, V, KI, VI, KO, VO> extends Clause<MatchR
         return OrMatchClause2.of(() -> MatchResult2.of(subject().either()
                                                                 .mapLeft(Tuple2::_2)
                                                                 .mapLeft(kiViOptTuple -> kiViOptTuple.map(mapper))
-                                                                .toEither(Tuple2.of(subject().either()
-                                                                                             .leftOrElse(null)
-                                                                                             ._1(),
-                                                                                    Option.none()))));
+                                                                .fold(kovoTupleOpt -> kovoTupleOpt.toEither(Tuple2.of(subject().unapply()
+                                                                                                                               ._1(),
+                                                                                                                      Option.none())),
+                                                                      kovoTuple2 -> Either.right(kovoTuple2))));
     }
 
     default OrMatchClause2<K, V, KI, VI, KO, VO> then(BiFunction<KI, Option<VI>, Tuple2<KO, VO>> biMapper) {
@@ -33,10 +34,10 @@ public interface OrThenOptionClause2<K, V, KI, VI, KO, VO> extends Clause<MatchR
                                                                 .mapLeft(Tuple2::_2)
                                                                 .mapLeft(kiviOptTuple -> kiviOptTuple.map(kiviTuple -> biMapper.apply(kiviTuple._1(),
                                                                                                                                       kiviTuple._2())))
-                                                                .toEither(Tuple2.of(subject().either()
-                                                                                             .leftOrElse(null)
-                                                                                             ._1(),
-                                                                                    Option.none()))));
+                                                                .fold(kovoTupleOpt -> kovoTupleOpt.toEither(Tuple2.of(subject().unapply()
+                                                                                                                               ._1(),
+                                                                                                                      Option.none())),
+                                                                      kovoTuple2 -> Either.right(kovoTuple2))));
     }
 
     default OrMatchClause2<K, V, KI, VI, KO, VO> then(Function<KI, KO> keyMapper,
@@ -45,9 +46,9 @@ public interface OrThenOptionClause2<K, V, KI, VI, KO, VO> extends Clause<MatchR
                                                                 .mapLeft(Tuple2::_2)
                                                                 .mapLeft(kiviOptTuple -> kiviOptTuple.map(kiviTuple -> kiviTuple.bimap(keyMapper,
                                                                                                                                        valueMapper)))
-                                                                .toEither(Tuple2.of(subject().either()
-                                                                                             .leftOrElse(null)
-                                                                                             ._1(),
-                                                                                    Option.none()))));
+                                                                .fold(kovoTupleOpt -> kovoTupleOpt.toEither(Tuple2.of(subject().unapply()
+                                                                                                                               ._1(),
+                                                                                                                      Option.none())),
+                                                                      kovoTuple2 -> Either.right(kovoTuple2))));
     }
 }

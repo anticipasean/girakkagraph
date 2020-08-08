@@ -175,24 +175,34 @@ public interface MatchClause2<K, V> extends Clause<Tuple2<K, V>> {
 
     }
 
+    @SuppressWarnings("unchecked")
     default <VI> ThenOptionClause2<K, V, K, VI> valueOptionOfType(Class<VI> inputType) {
         return ThenOptionClause2.of(() -> subject().map2(VariantMapper.inputTypeMapper(Option.class))
-                                                   .map2(optOpt -> optOpt.flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                   .map2(optOpt -> optOpt.orElse(Option.none()))
+                                                   .map2(option -> option.orElse(null))
+                                                   .map2(o -> Option.ofNullable(o)
+                                                                    .flatMap(VariantMapper.inputTypeMapper(inputType)))
                                                    .fold((k, opt) -> Tuple2.of(subject(),
-                                                                               Option.of(Tuple2.of(k,
-                                                                                                   opt)))));
+                                                                               Option.of(opt)
+                                                                                     .filter(Option::isPresent)
+                                                                                     .map(viOption -> Tuple2.of(k,
+                                                                                                                viOption)))));
     }
 
+    @SuppressWarnings("unchecked")
     default <VI> ThenOptionClause2<K, V, K, VI> valueOptionOfTypeAnd(Class<VI> inputType,
                                                                      Predicate<Option<VI>> condition) {
         return ThenOptionClause2.of(() -> subject().map2(VariantMapper.inputTypeMapper(Option.class))
-                                                   .map2(optOpt -> optOpt.flatMap(VariantMapper.inputTypeMapper(inputType)))
-                                                   .map2(viOpt -> Option.of(viOpt)
-                                                                        .filter(condition)
-                                                                        .orElse(Option.none()))
-                                                   .fold((k, opt) -> Tuple2.of(subject(),
-                                                                               Option.of(Tuple2.of(k,
-                                                                                                   opt)))));
+                                                   .map2(optOpt -> optOpt.orElse(Option.none()))
+                                                   .map2(option -> option.orElse(null))
+                                                   .map2(o -> Option.ofNullable(o)
+                                                                    .flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                   .fold((k, viOpt) -> Tuple2.of(subject(),
+                                                                               Option.of(viOpt)
+                                                                                     .filter(Option::isPresent)
+                                                                                     .filter(condition)
+                                                                                     .map(viOption -> Tuple2.of(k,
+                                                                                                                viOption)))));
     }
 
     default <KI> ThenClause2<K, V, KI, V> keyMapsTo(Function<K, Option<KI>> keyMapper) {

@@ -95,7 +95,8 @@ public interface MatchClause1<V> extends Clause<V> {
                                                 .map(o -> Option.ofNullable(o)
                                                                 .flatMap(VariantMapper.inputTypeMapper(inputType)))
                                                 .fold(option -> Tuple2.of(subject(),
-                                                                          Option.some(option).filter(Option::isPresent)),
+                                                                          Option.some(option)
+                                                                                .filter(Option::isPresent)),
                                                       () -> Tuple2.of(subject(),
                                                                       Option.none())));
     }
@@ -110,7 +111,8 @@ public interface MatchClause1<V> extends Clause<V> {
                                                                 .flatMap(VariantMapper.inputTypeMapper(inputType))
                                                                 .filter(condition))
                                                 .fold(option -> Tuple2.of(subject(),
-                                                                          Option.some(option).filter(Option::isPresent)),
+                                                                          Option.some(option)
+                                                                                .filter(Option::isPresent)),
                                                       () -> Tuple2.of(subject(),
                                                                       Option.none())));
     }
