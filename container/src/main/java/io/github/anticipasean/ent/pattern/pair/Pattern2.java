@@ -19,10 +19,11 @@ public interface Pattern2<K, V, KO, VO> extends Function1<Matcher2<K, V>, Tuple2
                                                    v));
     }
 
-    static <K, V, KO, VO> Function2<K, V, Iterable<Tuple2<KO, VO>>> asConcatMapper(Function1<Matcher2<K, V>, Iterable<Tuple2<KO, VO>>> pattern2) {
+    static <K, V, KO, VO> Function2<K, V, ? extends Iterable<Tuple2<KO, VO>>> asConcatMapper(Function1<Matcher2<K, V>, Tuple2<? extends Iterable<KO>, ? extends Iterable<VO>>> pattern2) {
         return (k, v) -> Option.of(pattern2.apply(Matcher.of(k,
                                                              v)))
-                               .fold(tupleIterable -> tupleIterable,
+                               .fold(tupleIterable -> ReactiveSeq.fromIterable(tupleIterable._1())
+                                                                 .zip(tupleIterable._2()),
                                      ReactiveSeq::empty);
     }
 

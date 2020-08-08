@@ -24,7 +24,6 @@ import cyclops.function.Function3;
 import cyclops.function.Function4;
 import cyclops.function.Reducer;
 import cyclops.reactive.ReactiveSeq;
-import io.github.anticipasean.ent.pattern.Matcher.Matcher1;
 import io.github.anticipasean.ent.pattern.Matcher.Matcher2;
 import io.github.anticipasean.ent.pattern.VariantMapper;
 import io.github.anticipasean.ent.pattern.pair.EntPattern2;
@@ -55,7 +54,86 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-
+/**
+ * A functional monadic type container with a backing immutable map data structure and map operations support e.g. {@code get(K)}
+ * and {@code put(K, V)} as well as a <i>fluent</i> API integration with functional pattern matching
+ * <p></p>
+ * Ents are designed for use as intermediate containers between entity types with named fields and corresponding values:
+ * <p></p>
+ * Entities: <b>Student</b>, <b>Teacher</b> with keys e.g. <b>PersonName</b> or <b>Long</b> ids
+ * <p></p>
+ * and target container types:
+ * <p></p>
+ * Target Types: <b>AddCourseRequest</b>, <b>CourseAddedResponse</b>
+ * <p></p>
+ * To be effective as intermediate containers, Ent key-value type parameters {@code <K> and <V>} need to both encapsulate the
+ * various field data types of the entities but also enable intermediate calculations and mappings to be performed on them
+ * easily. For example, {@code Ent<String, Member>} could be used for <b>Student</b> and <b>Teacher</b> since both
+ * are <b>Member</b>s of the <b>School</b>. It is also possible to widen the value type all the way to java.lang.Object if
+ * no narrower type can be used instead. <b>Pattern</b> functions and the match* methods on Ents e.g. {@code matchGet} make it
+ * possible to operate on different key-value types without the use of additional types and subtypes or the visitor pattern.
+ * <p></p>
+ * <b>Code Example:</b>
+ * <pre>
+ *        {@code Ent<String, Member>} ent = Ent.fromValuesIterable(schoolMembers,
+ *                                                          member -> String.join(":",
+ *                                                                                member.getClass()
+ *                                                                                      .getTypeName()
+ *                                                                                      .contains("Student") ? "student" : "teacher",
+ *                                                                                member.fullName()
+ *                                                                                      .firstName()));
+ *        //Note: The pattern for matching Ent tuple entries to the CourseImpl.Builder has the value type (V) widened from
+ *        //      Member to Object
+ *
+ *        {@code Pattern2<String, Object, String, UnaryOperator<Builder>>} courseBuilderMappingPattern = matcher -> {
+ *             return matcher.caseWhenKeyValue()
+ *                           .valueOfType(Student.class)
+ *                           .then((s, student) -> Tuple2.of(s,
+ *                                                           {@code (UnaryOperator<CourseImpl.Builder>)} (CourseImpl.Builder builder) -> builder.addStudentIds(student.id())))
+ *                           .valueOfType(Teacher.class)
+ *                           .then((s, teacher) -> Tuple2.of(s,
+ *                                                           builder -> builder.teacher(teacher)))
+ *                           .keyFitsAndValueOfType(k -> k.contains("id"),
+ *                                                  Long.class)
+ *                           .then((s, aLong) -> Tuple2.of(s,
+ *                                                         builder -> builder.id(aLong)))
+ *                           .keyFitsAndValueOfType(k -> k.contains("courseName"),
+ *                                                  String.class)
+ *                           .then((s, v) -> Tuple2.of(s,
+ *                                                     builder -> builder.name(v)))
+ *                           .keyFitsAndValueOfType(k -> k.contains("startDate"),
+ *                                                  LocalDate.class)
+ *                           .then((s, localDate) -> Tuple2.of(s,
+ *                                                             builder -> builder.startDate(localDate)))
+ *                           .keyFitsAndValueOfType(k -> k.contains("endDate"),
+ *                                                  LocalDate.class)
+ *                           .then((s, localDate) -> Tuple2.of(s,
+ *                                                             builder -> builder.endDate(localDate)))
+ *                           .elseThrow(kvTuple -> new IllegalArgumentException("no match was found for tuple: " + kvTuple));
+ *         };
+ *
+ *         //Note: The compiler will use the return type of the first "then" clause as the return type for the pattern
+ *         //      If you would like the return type to be wider e.g. {@code Iterable<Integer> rather than List<Integer>}
+ *         //      or more nuanced than the default e.g. {@code UnaryOperator<CourseImpl.Builder> rather than Object}, then a cast
+ *         //      or in other cases, an explicit type reference e.g. {@code Stream.<Integer>of(values)} may be necessary on that
+ *         //      key or value returned in the first "then" clause.
+ *
+ *         Course course = ent.map(member -> (Object) member)
+ *                            .putAll(courseAttributes.toMap(Tuple2::_1,
+ *                                                           Tuple2::_2))
+ *                            .matchFoldRight(courseBuilderMappingPattern,
+ *                                            CourseImpl.builder(),
+ *                                            (builder, stringUnaryOperatorTuple) -> stringUnaryOperatorTuple._2()
+ *                                                                                                           .apply(builder))
+ *                            .build();
+ *         Assert.assertEquals((long) course.id(),
+ *                             1231L);
+ * </pre>
+ *
+ * @param <K> An immutable <b>Key</b> type preferably with decent hashCode and equals method implementations to keep constant time
+ *            search and retrieval operations
+ * @param <V> A <b>Value</b> type preferably immutable to make operations on these values not change those in the original Ent
+ */
 public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
 
     static final boolean PARALLEL = true;
@@ -256,7 +334,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      */
 
     default <VO> Option<VO> matchGetValue(K key,
-                                          Function1<Matcher1<V>, VO> valuePattern) {
+                                          Pattern1<V, VO> valuePattern) {
         requireNonNull(key,
                        "key");
         requireNonNull(valuePattern,
@@ -266,20 +344,19 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     }
 
     default <KO, VO> Option<Tuple2<KO, VO>> matchGet(K key,
-                                                     Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern) {
+                                                     Pattern2<K, V, KO, VO> keyValuePattern) {
         requireNonNull(key,
                        "key");
         requireNonNull(keyValuePattern,
                        "keyValuePattern");
         return toImmutableMap().get(key)
-                               .fold(v -> Option.of(Tuple2.of(key,
-                                                              v))
-                                                .map(Pattern2.asMapper(keyValuePattern)),
-                                     Option::none);
+                               .map(v -> Pattern2.asMapper(keyValuePattern)
+                                                 .apply(Tuple2.of(key,
+                                                                  v)));
     }
 
     default <VO> VO matchOrElseGetValue(K key,
-                                        Function1<Matcher1<V>, VO> valuePattern,
+                                        Pattern1<V, VO> valuePattern,
                                         Supplier<? extends VO> defaultValueSupplier) {
         requireNonNull(key,
                        "key");
@@ -293,7 +370,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     }
 
     default <KO, VO> Tuple2<KO, VO> matchOrElseGet(K key,
-                                                   Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern,
+                                                   Pattern2<K, V, KO, VO> keyValuePattern,
                                                    Supplier<? extends Tuple2<KO, VO>> defaultKeyValueSupplier) {
         requireNonNull(key,
                        "key");
@@ -308,13 +385,13 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                .orElseGet(defaultKeyValueSupplier);
     }
 
-    default <VO> Ent<K, VO> matchMapValues(Function1<Matcher1<V>, VO> valuePattern) {
+    default <VO> Ent<K, VO> matchMapValues(Pattern1<V, VO> valuePattern) {
         requireNonNull(valuePattern,
                        "valuePattern");
         return fromImmutableMap(toImmutableMap().map(Pattern1.asMapper(valuePattern)));
     }
 
-    default <KO> Ent<KO, V> matchFlatMapKeys(Function1<Matcher1<K>, Ent<KO, V>> keyPattern) {
+    default <KO> Ent<KO, V> matchFlatMapKeys(Pattern1<K, Ent<KO, V>> keyPattern) {
         requireNonNull(keyPattern,
                        "keyPattern");
         return fromImmutableMap(toImmutableMap().flatMap((k, v) -> Pattern1.asMapper(keyPattern)
@@ -322,7 +399,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                            .toImmutableMap()));
     }
 
-    default <VO> Ent<K, VO> matchFlatMapValues(Function1<Matcher1<V>, Ent<K, VO>> valuePattern) {
+    default <VO> Ent<K, VO> matchFlatMapValues(Pattern1<V, Ent<K, VO>> valuePattern) {
         requireNonNull(valuePattern,
                        "valuePattern");
         return fromImmutableMap(toImmutableMap().flatMap((k, v) -> Pattern1.asMapper(valuePattern)
@@ -330,7 +407,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                            .toImmutableMap()));
     }
 
-    default <KO, VO> Ent<KO, VO> matchFlatMap(Function1<Matcher2<K, V>, Ent<KO, VO>> entPattern) {
+    default <KO, VO> Ent<KO, VO> matchFlatMap(EntPattern2<K, V, KO, VO> entPattern) {
         requireNonNull(entPattern,
                        "entPattern");
         return fromImmutableMap(toImmutableMap().flatMap((k, v) -> EntPattern2.asBiMapper(entPattern)
@@ -339,7 +416,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                               .toImmutableMap()));
     }
 
-    default <VO> ReactiveSeq<VO> matchMapValuesToReactiveSeq(Function1<Matcher1<V>, VO> valuePattern) {
+    default <VO> ReactiveSeq<VO> matchMapValuesToReactiveSeq(Pattern1<V, VO> valuePattern) {
         requireNonNull(valuePattern,
                        "valuePattern");
         return toImmutableMap().map(Pattern1.asMapper(valuePattern))
@@ -347,7 +424,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                .map(Tuple2::_2);
     }
 
-    default <VO> Stream<VO> matchMapValuesToStream(Function1<Matcher1<V>, VO> valuePattern) {
+    default <VO> Stream<VO> matchMapValuesToStream(Pattern1<V, VO> valuePattern) {
         requireNonNull(valuePattern,
                        "valuePattern");
         return StreamSupport.stream(toImmutableMap().map(Pattern1.asMapper(valuePattern))
@@ -357,20 +434,20 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                     PARALLEL);
     }
 
-    default <KO, VO> Ent<KO, VO> matchMap(Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern) {
+    default <KO, VO> Ent<KO, VO> matchMap(Pattern2<K, V, KO, VO> keyValuePattern) {
         requireNonNull(keyValuePattern,
                        "keyValuePattern");
         return fromImmutableMap(toImmutableMap().bimap(Pattern2.asBiMapper(keyValuePattern)));
     }
 
-    default <KO, VO> ReactiveSeq<Tuple2<KO, VO>> matchMapToReactiveSeq(Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern) {
+    default <KO, VO> ReactiveSeq<Tuple2<KO, VO>> matchMapToReactiveSeq(Pattern2<K, V, KO, VO> keyValuePattern) {
         requireNonNull(keyValuePattern,
                        "keyValuePattern");
         return toImmutableMap().bimap(Pattern2.asBiMapper(keyValuePattern))
                                .stream();
     }
 
-    default <KO, VO> Stream<Tuple2<KO, VO>> matchMapToStream(Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern) {
+    default <KO, VO> Stream<Tuple2<KO, VO>> matchMapToStream(Pattern2<K, V, KO, VO> keyValuePattern) {
         requireNonNull(keyValuePattern,
                        "keyValuePattern");
         return StreamSupport.stream(toImmutableMap().bimap(Pattern2.asBiMapper(keyValuePattern))
@@ -379,7 +456,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                     PARALLEL);
     }
 
-    default <VO> Ent<K, VO> matchFilterValues(Function1<Matcher1<V>, VO> valuePattern,
+    default <VO> Ent<K, VO> matchFilterValues(Pattern1<V, VO> valuePattern,
                                               Predicate<? super VO> predicate) {
         requireNonNull(valuePattern,
                        "valuePattern");
@@ -389,7 +466,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                 .filter(kvoTuple2 -> predicate.test(kvoTuple2._2())));
     }
 
-    default <KO> Ent<KO, V> matchFilterKeys(Function1<Matcher1<K>, KO> keyPattern,
+    default <KO> Ent<KO, V> matchFilterKeys(Pattern1<K, KO> keyPattern,
                                             Predicate<? super KO> predicate) {
         requireNonNull(keyPattern,
                        "keyPattern");
@@ -399,7 +476,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                 .filter(kvoTuple2 -> predicate.test(kvoTuple2._1())));
     }
 
-    default <KO, VO> Ent<KO, VO> matchFilter(Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern,
+    default <KO, VO> Ent<KO, VO> matchFilter(Pattern2<K, V, KO, VO> keyValuePattern,
                                              Predicate<? super Tuple2<KO, VO>> predicate) {
         requireNonNull(keyValuePattern,
                        "keyValuePattern");
@@ -409,14 +486,14 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                 .filter(predicate));
     }
 
-    default <KO, VO> Ent<KO, VO> matchConcatMap(Function1<Matcher2<K, V>, Iterable<Tuple2<KO, VO>>> keyValuePattern) {
+    default <KO, VO> Ent<KO, VO> matchConcatMap(Function1<Matcher2<K, V>, Tuple2<? extends Iterable<KO>, ? extends Iterable<VO>>> keyValuePattern) {
         requireNonNull(keyValuePattern,
                        "keyValuePattern");
         return fromImmutableMap(toImmutableMap().concatMap(Pattern2.asConcatMapper(keyValuePattern)));
     }
 
-    default <KO, VO, R> R matchFold(R zero,
-                                    Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern,
+    default <KO, VO, R> R matchFold(Pattern2<K, V, KO, VO> keyValuePattern,
+                                    R zero,
                                     Function1<Tuple2<KO, VO>, R> mapper,
                                     BinaryOperator<R> combiner) {
         requireNonNull(zero,
@@ -433,7 +510,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                                   .apply(tuple2))));
     }
 
-    default <R> R matchFoldKeys(Function1<Matcher1<K>, R> keyPattern,
+    default <R> R matchFoldKeys(Pattern1<K, R> keyPattern,
                                 R zero,
                                 BinaryOperator<R> combiner) {
         requireNonNull(zero,
@@ -448,7 +525,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                      .apply(tuple2._1())));
     }
 
-    default <R> R matchFoldValues(Function1<Matcher1<V>, R> valuePattern,
+    default <R> R matchFoldValues(Pattern1<V, R> valuePattern,
                                   R zero,
                                   BinaryOperator<R> combiner) {
         requireNonNull(zero,
@@ -463,7 +540,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                      .apply(tuple2._2())));
     }
 
-    default <R, KO, VO> R matchFoldLeft(Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern,
+    default <R, KO, VO> R matchFoldLeft(Pattern2<K, V, KO, VO> keyValuePattern,
                                         R identity,
                                         BiFunction<R, ? super Tuple2<KO, VO>, R> accumulator,
                                         BinaryOperator<R> combiner) {
@@ -483,27 +560,22 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                          combiner);
     }
 
-    default <R, KO, VO> R matchFoldRight(Function1<Matcher2<K, V>, Tuple2<KO, VO>> keyValuePattern,
+    default <R, KO, VO> R matchFoldRight(Pattern2<K, V, KO, VO> keyValuePattern,
                                          R zero,
-                                         BiFunction<KO, VO, R> mapper,
-                                         BinaryOperator<R> combiner) {
+                                         BiFunction<R, ? super Tuple2<KO, VO>, R> accumulator) {
         requireNonNull(zero,
                        "zero");
         requireNonNull(keyValuePattern,
                        "keyValuePattern");
-        requireNonNull(mapper,
-                       "mapper");
-        requireNonNull(combiner,
-                       "combiner");
-        return toImmutableMap().foldMapRight(Reducer.of(zero,
-                                                        combiner,
-                                                        kvTuple -> Pattern2.asMapper(keyValuePattern)
-                                                                           .andThen(kovoTuple -> mapper.apply(kovoTuple._1(),
-                                                                                                              kovoTuple._2()))
-                                                                           .apply(kvTuple)));
+        requireNonNull(accumulator,
+                       "accumulator");
+        return toImmutableMap().foldRight(zero,
+                                          (kvTuple, r) -> accumulator.apply(r,
+                                                                            Pattern2.asMapper(keyValuePattern)
+                                                                                    .apply(kvTuple)));
     }
 
-    default <VO, R> R matchFoldLeftValues(Function1<Matcher1<V>, VO> valuePattern,
+    default <VO, R> R matchFoldLeftValues(Pattern1<V, VO> valuePattern,
                                           R identity,
                                           BiFunction<R, VO, R> accumulator,
                                           BinaryOperator<R> combiner) {
@@ -523,7 +595,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                          combiner);
     }
 
-    default <KO, R> R matchFoldLeftKeys(Function1<Matcher1<K>, KO> keyPattern,
+    default <KO, R> R matchFoldLeftKeys(Pattern1<K, KO> keyPattern,
                                         R identity,
                                         BiFunction<R, KO, R> accumulator,
                                         BinaryOperator<R> combiner) {
@@ -543,7 +615,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                          combiner);
     }
 
-    default <VO, R> R matchFoldRightValues(Function1<Matcher1<V>, VO> valuePattern,
+    default <VO, R> R matchFoldRightValues(Pattern1<V, VO> valuePattern,
                                            R identity,
                                            BiFunction<? super VO, ? super R, ? extends R> accumulator) {
         requireNonNull(valuePattern,
@@ -559,7 +631,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                   .apply(kvTuple._2()));
     }
 
-    default <KO, R> R matchFoldRightKeys(Function1<Matcher1<K>, KO> keyPattern,
+    default <KO, R> R matchFoldRightKeys(Pattern1<K, KO> keyPattern,
                                          R identity,
                                          BiFunction<? super KO, ? super R, ? extends R> accumulator) {
         requireNonNull(keyPattern,
@@ -576,7 +648,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     }
 
 
-    default <VO> VO matchFoldLeftValues(Function1<Matcher1<V>, VO> valuePattern,
+    default <VO> VO matchFoldLeftValues(Pattern1<V, VO> valuePattern,
                                         VO identity,
                                         BinaryOperator<VO> accumulator) {
         requireNonNull(valuePattern,
@@ -592,7 +664,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                   .apply(kvTuple._2()));
     }
 
-    default <VO> VO matchFoldRightValues(Function1<Matcher1<V>, VO> valuePattern,
+    default <VO> VO matchFoldRightValues(Pattern1<V, VO> valuePattern,
                                          VO identity,
                                          BinaryOperator<VO> accumulator) {
         requireNonNull(valuePattern,
@@ -626,7 +698,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
 
     default <KI, VI> Ent<K, V> matchPut(KI inputKey,
                                         VI inputValue,
-                                        Function1<Matcher2<KI, VI>, Tuple2<K, V>> inputKeyValuePattern) {
+                                        Pattern2<KI, VI, K, V> inputKeyValuePattern) {
         requireNonNull(inputKey,
                        "inputKey");
         requireNonNull(inputValue,
@@ -641,7 +713,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
     }
 
     default <KI, VI> Ent<K, V> matchPutAll(Iterable<? extends Tuple2<KI, VI>> inputKeyValueTuples,
-                                           Function1<Matcher2<KI, VI>, Tuple2<K, V>> inputKeyValuePattern) {
+                                           Pattern2<KI, VI, K, V> inputKeyValuePattern) {
         requireNonNull(inputKeyValueTuples,
                        "inputKeyValueTuples");
         requireNonNull(inputKeyValuePattern,
@@ -805,20 +877,32 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
         return fromImmutableMap(toImmutableMap().filterValues(predicate));
     }
 
+    default Ent<K, V> filterKeysNot(Predicate<? super K> predicate) {
+        requireNonNull(predicate,
+                       "predicate");
+        return fromImmutableMap(toImmutableMap().filterKeys(predicate.negate()));
+    }
+
+    default Ent<K, V> filterValuesNot(Predicate<? super V> predicate) {
+        requireNonNull(predicate,
+                       "predicate");
+        return fromImmutableMap(toImmutableMap().filterValues(predicate.negate()));
+    }
+
     default Ent<K, V> filterNot(Predicate<? super Tuple2<K, V>> predicate) {
         requireNonNull(predicate,
                        "predicate");
         return fromImmutableMap(toImmutableMap().filterNot(predicate));
     }
 
-    default Ent<K, V> notNull() {
+    default Ent<K, V> filterNonNull() {
         return fromImmutableMap(toImmutableMap().notNull());
     }
 
-    default <VO extends V> Ent<K, V> filterValuesOfType(Class<? extends VO> valueSubType) {
-        requireNonNull(valueSubType,
+    default <VO> Ent<K, V> filterValuesOfType(Class<VO> possibleValueType) {
+        requireNonNull(possibleValueType,
                        "possibleValueType");
-        return fromImmutableMap(toImmutableMap().filterValues(VariantMapper.inputTypeFilter(valueSubType)));
+        return fromImmutableMap(toImmutableMap().filterValues(VariantMapper.inputTypeFilter(possibleValueType)));
     }
 
     /**

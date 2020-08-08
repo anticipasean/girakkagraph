@@ -1,6 +1,6 @@
-package io.github.anticipasean.ent.example.school;
+package io.github.anticipasean.ent.fixtures.school;
 
-//@org.immutables.value.Value.Immutable
+@org.immutables.value.Value.Immutable
 
 public interface ExamResult {
 

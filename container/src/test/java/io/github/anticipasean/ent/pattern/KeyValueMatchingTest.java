@@ -1,6 +1,5 @@
 package io.github.anticipasean.ent.pattern;
 
-import cyclops.companion.Streamable;
 import cyclops.data.Seq;
 import cyclops.data.tuple.Tuple2;
 import cyclops.reactive.ReactiveSeq;
@@ -8,6 +7,7 @@ import io.github.anticipasean.ent.Ent;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -90,23 +90,25 @@ public class KeyValueMatchingTest {
 
     @Test
     public void matchConcatTest() {
-        Seq<Tuple2<Integer, List<Integer>>> tuples = Seq.of(Tuple2.of(12,
-                                                                      Arrays.asList(1,
-                                                                                    2,
-                                                                                    3)),
-                                                            Tuple2.of(13,
-                                                                      Arrays.asList(4,
-                                                                                    5,
-                                                                                    6)));
+
+        Seq<Tuple2<Integer, List<Integer>>> tuples = Seq.cons(Tuple2.<Integer, List<Integer>>of(12,
+                                                                                                Arrays.<Integer>asList(1,
+                                                                                                                       2,
+                                                                                                                       3)),
+                                                              Seq.empty())
+                                                        .append(Tuple2.<Integer, List<Integer>>of(13,
+                                                                                                  Arrays.<Integer>asList(4,
+                                                                                                                         5,
+                                                                                                                         6)));
 
         Ent<Integer, Integer> ent = Ent.fromIterable(tuples)
                                        .matchConcatMap(matcher -> matcher.caseWhenKeyValue()
                                                                          .keyFits(integer -> integer > 10)
-                                                                         .then((integer, integers) -> Tuple2.of((Iterable<Integer>) integers,
-                                                                                                                (Iterable<Integer>) ReactiveSeq.of(integer)
-                                                                                                                                               .cycle(integers.size())))
-                                                                         .elseDefault(Tuple2.of(Streamable.of(0),
-                                                                                                Streamable.of(0))));
+                                                                         .then((integer, integers) -> Tuple2.of(integers,
+                                                                                                                ReactiveSeq.of(integer)
+                                                                                                                           .cycle(3)))
+                                                                         .elseDefault(Tuple2.of(Collections.emptyList(),
+                                                                                                ReactiveSeq.empty())));
         Assert.assertEquals(ent.size(),
                             6,
                             "six pairs of ints not generated: " + ent.mkString());
@@ -117,16 +119,16 @@ public class KeyValueMatchingTest {
     public void matchPutAllTest() {
         Seq<Tuple2<String, Number>> tuples = Seq.of("one",
                                                     "two_float")
-                                                .zip(Seq.of(1,
-                                                            2.0F));
+                                                .zip(Seq.<Number>of(1,
+                                                                    2.0F));
         Ent<String, Number> numEnt = Ent.fromIterable(tuples);
 
         Seq<Tuple2<String, Number>> tuples2 = Seq.of("big_int_one",
                                                      "sixty-three_plus",
                                                      "big_three_22")
-                                                 .zip(Seq.of(BigInteger.valueOf(1231313112323L),
-                                                             63.2F,
-                                                             BigDecimal.valueOf(3.22)));
+                                                 .zip(Seq.<Number>of(BigInteger.valueOf(1231313112323L),
+                                                                     63.2F,
+                                                                     BigDecimal.valueOf(3.22)));
         Assert.assertEquals(numEnt.size(),
                             2);
         numEnt = numEnt.matchPutAll(tuples2,

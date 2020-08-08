@@ -1,6 +1,7 @@
 package io.github.anticipasean.ent.pattern.single;
 
 import cyclops.function.Function1;
+import io.github.anticipasean.ent.Ent;
 import io.github.anticipasean.ent.pattern.Matcher;
 import io.github.anticipasean.ent.pattern.Matcher.Matcher1;
 

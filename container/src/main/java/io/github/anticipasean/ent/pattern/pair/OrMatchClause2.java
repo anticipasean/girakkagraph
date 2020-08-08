@@ -1,8 +1,10 @@
 package io.github.anticipasean.ent.pattern.pair;
 
 import cyclops.companion.Streamable;
+import cyclops.control.Either;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
+import cyclops.function.Function1;
 import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
 import io.github.anticipasean.ent.pattern.Clause;
 import io.github.anticipasean.ent.pattern.VariantMapper;
@@ -335,9 +337,21 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
 
     }
 
-    default Option<Tuple2<KO, VO>> elseYield() {
+    default Option<Tuple2<KO, VO>> elseYieldOption() {
         return subject().either()
                         .toOption();
+    }
+
+    default Either<Tuple2<K, V>, Tuple2<KO, VO>> elseYieldOriginalOrResult() {
+        return subject().either()
+                        .fold(tuple2OptionTuple2 -> Either.left(tuple2OptionTuple2._1()),
+                              kovoTuple2 -> Either.right(kovoTuple2));
+    }
+
+    default Tuple2<KO, VO> elseYield() {
+        return subject().either()
+                        .orElse(Tuple2.of(null,
+                                          null));
     }
 
     default Option<KO> elseYieldKey() {
@@ -383,12 +397,15 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
                         .orElseGet(tupleSupplier);
     }
 
-    default <X extends RuntimeException> Tuple2<KO, VO> elseThrow(Supplier<X> throwableSupplier) {
+    default <X extends RuntimeException> Tuple2<KO, VO> elseThrow(Function1<Tuple2<K, V>, X> throwableMapper) {
         if (subject().either()
                      .isRight()) {
             return subject().either()
                             .orElse(null);
         }
-        throw throwableSupplier.get();
+        throw throwableMapper.apply(subject().either()
+                                             .mapLeft(Tuple2::_1)
+                                             .leftOrElse(Tuple2.of(null,
+                                                                   null)));
     }
 }

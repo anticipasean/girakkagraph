@@ -60,18 +60,18 @@ public class BasicEntTest {
                                                     "one-half",
                                                     "two-and-a-half",
                                                     "ten")
-                                                .zip(Seq.of(1,
-                                                            1.5f,
-                                                            2.5f,
-                                                            10));
+                                                .zip(Seq.<Number>of(1,
+                                                                    1.5f,
+                                                                    2.5f,
+                                                                    10));
         Ent<String, Number> numberEnt = Ent.fromIterable(tuples);
-        Integer sumOfIntegers = numberEnt.matchFold(0,
-                                                    matcher -> matcher.caseWhenKeyValue()
+        Integer sumOfIntegers = numberEnt.matchFold(matcher -> matcher.caseWhenKeyValue()
                                                                       .valueOfType(Integer.class)
                                                                       .then((s, integer) -> Tuple2.of(String.valueOf(integer),
                                                                                                       integer))
                                                                       .elseDefault(Tuple2.of("0",
                                                                                              0)),
+                                                    0,
                                                     stringIntegerTuple2 -> stringIntegerTuple2._2(),
                                                     (integer, integer2) -> integer + integer2);
         Assert.assertEquals(sumOfIntegers.intValue(),
@@ -80,22 +80,21 @@ public class BasicEntTest {
 
     @Test
     public void matchFoldOptionTest() {
-        Seq<Tuple2<String, Number>> tuples = Seq.of("one",
-                                                    "one-and-a-half",
-                                                    "two-and-a-half",
-                                                    "ten")
-                                                .zip(Seq.of(1,
-                                                            1.5f,
-                                                            2.5f,
-                                                            10));
+        Seq<Tuple2<String, Number>> tuples = Seq.<String>of("one",
+                                                            "one-and-a-half",
+                                                            "two-and-a-half",
+                                                            "ten").zip(Seq.<Number>of(1,
+                                                                                      1.5f,
+                                                                                      2.5f,
+                                                                                      10));
         Ent<String, Number> numberEnt = Ent.fromIterable(tuples);
-        Option<Integer> integerSumOpt = numberEnt.matchFold(Option.<Integer>none(),
-                                                            matcher -> matcher.caseWhenKeyValue()
+        Option<Integer> integerSumOpt = numberEnt.matchFold(matcher -> matcher.caseWhenKeyValue()
                                                                               .valueOfType(Integer.class)
                                                                               .then((s, integer) -> Tuple2.of(String.valueOf(integer),
                                                                                                               Option.of(integer)))
                                                                               .elseDefault(null,
                                                                                            Option.some(0)),
+                                                            Option.<Integer>none(),
                                                             stringIntegerOptTuple2 -> stringIntegerOptTuple2._2(),
                                                             (integerOpt1, integerOpt2) -> integerOpt2.map(integer2 -> integerOpt1.map(integer1 ->
                                                                                                                                           integer2
@@ -111,16 +110,16 @@ public class BasicEntTest {
                                                     "one-and-a-half",
                                                     "two-and-a-half",
                                                     "ten")
-                                                .zip(Seq.of(1,
-                                                            1.5f,
-                                                            2.5f,
-                                                            10));
+                                                .zip(Seq.<Number>of(1,
+                                                                    1.5f,
+                                                                    2.5f,
+                                                                    10));
         Ent<String, Number> numberEnt = Ent.fromIterable(tuples);
-        Integer integerSum = numberEnt.matchFoldValues(0,
-                                                       matcher -> matcher.caseWhenValue()
+        Integer integerSum = numberEnt.matchFoldValues(matcher -> matcher.caseWhenValue()
                                                                          .isOfType(Integer.class)
                                                                          .then(integer -> integer)
                                                                          .elseDefault(0),
+                                                       0,
                                                        (integer, integer2) -> integer + integer2);
         Assert.assertEquals(integerSum.intValue(),
                             11);

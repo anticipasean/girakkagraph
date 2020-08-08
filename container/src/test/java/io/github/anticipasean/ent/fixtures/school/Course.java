@@ -1,10 +1,10 @@
-package io.github.anticipasean.ent.example.school;
+package io.github.anticipasean.ent.fixtures.school;
 
 import java.time.LocalDate;
 import java.util.List;
 
-//@org.immutables.value.Value.Immutable
-
+@org.immutables.value.Value.Immutable
+@org.immutables.value.Value.Enclosing
 public interface Course {
 
     Long id();
@@ -13,7 +13,7 @@ public interface Course {
 
     Teacher teacher();
 
-    List<Student> students();
+    List<Long> studentIds();
 
     List<Exam> exams();
 
