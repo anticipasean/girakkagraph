@@ -248,6 +248,42 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
                                                                                                                                              viIterable))))));
     }
 
+    default <VI> OrThenOptionClause2<K, V, K, VI, KO, VO> valueOptionOfType(Class<VI> inputType) {
+        return OrThenOptionClause2.of(() -> MatchResult2.of(subject().either()
+                                                                     .mapLeft(Tuple2::_1)
+                                                                     .mapLeft(Tuple2::_2)
+                                                                     .mapLeft(VariantMapper.inputTypeMapper(Option.class))
+                                                                     .mapLeft(optOpt -> optOpt.flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                                     .mapLeft(viOpt -> Tuple2.of(subject().either()
+                                                                                                          .leftOrElse(null)
+                                                                                                          ._1(),
+                                                                                                 Option.of(viOpt)
+                                                                                                       .map(viOpt1 -> Tuple2.of(subject().unapply()
+                                                                                                                                         ._1()
+                                                                                                                                         ._1(),
+                                                                                                                                viOpt1))))));
+    }
+
+    default <VI> OrThenOptionClause2<K, V, K, VI, KO, VO> valueOptionOfTypeAnd(Class<VI> inputType,
+                                                                               Predicate<Option<VI>> condition) {
+        return OrThenOptionClause2.of(() -> MatchResult2.of(subject().either()
+                                                                     .mapLeft(Tuple2::_1)
+                                                                     .mapLeft(Tuple2::_2)
+                                                                     .mapLeft(VariantMapper.inputTypeMapper(Option.class))
+                                                                     .mapLeft(optOpt -> optOpt.flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                                     .mapLeft(viOpt -> Option.of(viOpt)
+                                                                                             .filter(condition)
+                                                                                             .orElse(Option.none()))
+                                                                     .mapLeft(viOpt -> Tuple2.of(subject().either()
+                                                                                                          .leftOrElse(null)
+                                                                                                          ._1(),
+                                                                                                 Option.of(viOpt)
+                                                                                                       .map(viOpt1 -> Tuple2.of(subject().unapply()
+                                                                                                                                         ._1()
+                                                                                                                                         ._1(),
+                                                                                                                                viOpt1))))));
+    }
+
     default <KI> OrThenClause2<K, V, KI, V, KO, VO> keyMapsTo(Function<K, Option<KI>> keyMapper) {
         return OrThenClause2.of(() -> MatchResult2.of(subject().either()
                                                                .mapLeft(Tuple2::_1)
@@ -337,18 +373,18 @@ public interface OrMatchClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult
 
     }
 
-    default Option<Tuple2<KO, VO>> elseYieldOption() {
+    default Option<Tuple2<KO, VO>> elseOption() {
         return subject().either()
                         .toOption();
     }
 
-    default Either<Tuple2<K, V>, Tuple2<KO, VO>> elseYieldOriginalOrResult() {
+    default Either<Tuple2<K, V>, Tuple2<KO, VO>> elseOriginalOrResult() {
         return subject().either()
                         .fold(tuple2OptionTuple2 -> Either.left(tuple2OptionTuple2._1()),
-                              kovoTuple2 -> Either.right(kovoTuple2));
+                              Either::right);
     }
 
-    default Tuple2<KO, VO> elseYield() {
+    default Tuple2<KO, VO> elseNullable() {
         return subject().either()
                         .orElse(Tuple2.of(null,
                                           null));

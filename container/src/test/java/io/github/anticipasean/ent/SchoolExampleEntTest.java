@@ -35,7 +35,7 @@ public class SchoolExampleEntTest {
                                                                                                                                                                  .stream())
                                                                                                                                             .collect(Seq.collector())))
                                                                                                      .then(Tuple2::of)
-                                                                                                     .elseYield());
+                                                                                                     .elseNullable());
         Assert.assertTrue(examsForCourse.isPresent());
         Assert.assertEquals((int) examsForCourse.map(Tuple2::_2)
                                                 .map(Seq::size)

@@ -19,6 +19,13 @@ public interface ThenIterableClause2<K, V, KI, VI> extends Clause<Tuple2<Tuple2<
         };
     }
 
+    default <KO, VO> OrMatchClause2<K, V, KI, VI, KO, VO> then(Function<Tuple2<KI, Streamable<VI>>, Tuple2<KO, VO>> mapper) {
+        return OrMatchClause2.of(() -> MatchResult2.of(subject().map2(kiviTupleOpt -> kiviTupleOpt.map(kiIterableTuple2 -> kiIterableTuple2.map2(Streamable::fromIterable))
+                                                                                                  .map(mapper))
+                                                                .fold((kvTuple2, kovoTuple2) -> kovoTuple2.toEither(Tuple2.of(kvTuple2,
+                                                                                                                              Option.none())))));
+    }
+
     default <KO, VO> OrMatchClause2<K, V, KI, VI, KO, VO> then(BiFunction<KI, Streamable<VI>, Tuple2<KO, VO>> mapper) {
         return OrMatchClause2.of(() -> MatchResult2.of(subject().map2(kiviTupleOpt -> kiviTupleOpt.map(kiviTuple2 -> mapper.apply(kiviTuple2._1(),
                                                                                                                                   Streamable.fromIterable(kiviTuple2._2()))))

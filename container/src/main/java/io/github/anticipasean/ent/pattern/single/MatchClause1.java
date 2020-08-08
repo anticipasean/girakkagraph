@@ -3,9 +3,9 @@ package io.github.anticipasean.ent.pattern.single;
 import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
+import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
 import io.github.anticipasean.ent.pattern.Clause;
 import io.github.anticipasean.ent.pattern.VariantMapper;
-import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -59,7 +59,6 @@ public interface MatchClause1<V> extends Clause<V> {
                                                                 Option.none())));
     }
 
-    //TODO: Test reusing iterator
     default <T, E> ThenIterableClause1<V, E> isIterableOver(Class<E> elementType) {
         return ThenIterableClause1.of(() -> Option.of(subject())
                                                   .flatMap(VariantMapper.inputTypeMapper(Iterable.class))
@@ -86,6 +85,30 @@ public interface MatchClause1<V> extends Clause<V> {
                                                                               Option.some(iterable)),
                                                         () -> Tuple2.of(subject(),
                                                                         Option.none())));
+    }
+
+    default <I> ThenOptionClause1<V, I> isOptionOfType(Class<I> inputType) {
+        return ThenOptionClause1.of(() -> Option.of(subject())
+                                                .flatMap(VariantMapper.inputTypeMapper(Option.class))
+                                                .map(VariantMapper.inputTypeMapper(inputType))
+                                                .fold(option -> Tuple2.of(subject(),
+                                                                          Option.some(option)),
+                                                      () -> Tuple2.of(subject(),
+                                                                      Option.none())));
+    }
+
+    default <I> ThenOptionClause1<V, I> isOptionOfTypeAnd(Class<I> inputType,
+                                                          Predicate<Option<I>> condition) {
+        return ThenOptionClause1.of(() -> Option.of(subject())
+                                                .flatMap(VariantMapper.inputTypeMapper(Option.class))
+                                                .map(VariantMapper.inputTypeMapper(inputType))
+                                                .map(inputOpt -> Option.of(inputOpt)
+                                                                       .filter(condition)
+                                                                       .orElse(Option.none()))
+                                                .fold(option -> Tuple2.of(subject(),
+                                                                          Option.some(option)),
+                                                      () -> Tuple2.of(subject(),
+                                                                      Option.none())));
     }
 
     default <I> ThenClause1<V, I> mapsTo(Function<V, Option<I>> extractor) {

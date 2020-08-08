@@ -3,9 +3,9 @@ package io.github.anticipasean.ent.pattern.pair;
 import cyclops.companion.Streamable;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
-import io.github.anticipasean.ent.pattern.VariantMapper;
-import io.github.anticipasean.ent.pattern.Clause;
 import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
+import io.github.anticipasean.ent.pattern.Clause;
+import io.github.anticipasean.ent.pattern.VariantMapper;
 import java.util.Iterator;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
@@ -173,6 +173,26 @@ public interface MatchClause2<K, V> extends Clause<Tuple2<K, V>> {
                                                                                                                            iter)))));
 
 
+    }
+
+    default <VI> ThenOptionClause2<K, V, K, VI> valueOptionOfType(Class<VI> inputType) {
+        return ThenOptionClause2.of(() -> subject().map2(VariantMapper.inputTypeMapper(Option.class))
+                                                   .map2(optOpt -> optOpt.flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                   .fold((k, opt) -> Tuple2.of(subject(),
+                                                                               Option.of(Tuple2.of(k,
+                                                                                                   opt)))));
+    }
+
+    default <VI> ThenOptionClause2<K, V, K, VI> valueOptionOfTypeAnd(Class<VI> inputType,
+                                                                     Predicate<Option<VI>> condition) {
+        return ThenOptionClause2.of(() -> subject().map2(VariantMapper.inputTypeMapper(Option.class))
+                                                   .map2(optOpt -> optOpt.flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                   .map2(viOpt -> Option.of(viOpt)
+                                                                        .filter(condition)
+                                                                        .orElse(Option.none()))
+                                                   .fold((k, opt) -> Tuple2.of(subject(),
+                                                                               Option.of(Tuple2.of(k,
+                                                                                                   opt)))));
     }
 
     default <KI> ThenClause2<K, V, KI, V> keyMapsTo(Function<K, Option<KI>> keyMapper) {

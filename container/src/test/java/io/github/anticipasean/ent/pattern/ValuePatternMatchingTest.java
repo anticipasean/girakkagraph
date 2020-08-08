@@ -118,7 +118,7 @@ public class ValuePatternMatchingTest {
                                            .then(integer -> BigDecimal.valueOf(integer))
                                            .isOfType(Float.class)
                                            .then(aFloat -> BigDecimal.valueOf(2.2))
-                                           .yield();
+                                           .elseNullable();
         Assert.assertTrue(bigDec.isPresent());
     }
 
@@ -132,7 +132,7 @@ public class ValuePatternMatchingTest {
                                            .then(integer -> BigDecimal.valueOf(integer))
                                            .isOfType(Float.class)
                                            .then(aFloat -> BigDecimal.valueOf(2.2))
-                                           .yield();
+                                           .elseNullable();
         Assert.assertFalse(bigDec.isPresent());
     }
 

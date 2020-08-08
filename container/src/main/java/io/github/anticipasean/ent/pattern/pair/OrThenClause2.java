@@ -38,4 +38,13 @@ public interface OrThenClause2<K, V, KI, VI, KO, VO> extends Clause<MatchResult2
                                                                                                                                       ._1(),
                                                                                                                              Option.none())))));
     }
+
+    default OrMatchClause2<K, V, KI, VI, KO, VO> then(Function<Tuple2<KI, VI>, Tuple2<KO, VO>> mapper) {
+        return OrMatchClause2.of(() -> MatchResult2.of(subject().either()
+                                                                .mapLeft(Tuple2::_2)
+                                                                .mapLeft(kiviOptTuple -> kiviOptTuple.map(mapper))
+                                                                .flatMapLeft(kiviOptTuple -> kiviOptTuple.toEither(Tuple2.of(subject().unapply()
+                                                                                                                                      ._1(),
+                                                                                                                             Option.none())))));
+    }
 }

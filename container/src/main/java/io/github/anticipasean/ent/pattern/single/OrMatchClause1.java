@@ -1,11 +1,12 @@
 package io.github.anticipasean.ent.pattern.single;
 
 import cyclops.companion.Streamable;
+import cyclops.control.Either;
 import cyclops.control.Option;
 import cyclops.data.tuple.Tuple2;
-import io.github.anticipasean.ent.pattern.VariantMapper;
-import io.github.anticipasean.ent.pattern.Clause;
 import io.github.anticipasean.ent.iterator.TypeMatchingIterable;
+import io.github.anticipasean.ent.pattern.Clause;
+import io.github.anticipasean.ent.pattern.VariantMapper;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -95,6 +96,30 @@ public interface OrMatchClause1<V, I, O> extends Clause<MatchResult1<V, I, O>> {
                                                                                                                      Option.none())))));
     }
 
+    default <I> OrThenOptionClause1<V, I, O> isOptionOfType(Class<I> inputType) {
+        return OrThenOptionClause1.of(() -> MatchResult1.of(subject().either()
+                                                                     .mapLeft(tuple -> tuple.map1(VariantMapper.inputTypeMapper(Option.class)))
+                                                                     .mapLeft(tuple -> tuple._1()
+                                                                                            .flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                                     .flatMapLeft(inputOpt -> Either.left(Tuple2.of(subject().unapply()
+                                                                                                                             ._1(),
+                                                                                                                    Option.of(inputOpt))))));
+    }
+
+    default <I> OrThenOptionClause1<V, I, O> isOptionOfTypeAnd(Class<I> inputType,
+                                                               Predicate<Option<I>> condition) {
+        return OrThenOptionClause1.of(() -> MatchResult1.of(subject().either()
+                                                                     .mapLeft(tuple -> tuple.map1(VariantMapper.inputTypeMapper(Option.class)))
+                                                                     .mapLeft(tuple -> tuple._1()
+                                                                                            .flatMap(VariantMapper.inputTypeMapper(inputType)))
+                                                                     .mapLeft(opt -> Option.of(opt)
+                                                                                           .filter(condition)
+                                                                                           .orElse(Option.none()))
+                                                                     .flatMapLeft(inputOpt -> Either.left(Tuple2.of(subject().unapply()
+                                                                                                                             ._1(),
+                                                                                                                    Option.of(inputOpt))))));
+    }
+
     default <I> OrThenClause1<V, I, O> mapsTo(Function<V, Option<I>> mapper) {
         return OrThenClause1.of(() -> MatchResult1.of(subject().either()
                                                                .mapLeft(tuple -> tuple.first()
@@ -119,12 +144,17 @@ public interface OrMatchClause1<V, I, O> extends Clause<MatchResult1<V, I, O>> {
                                                                                           iOpt))));
     }
 
-
-    default Option<O> yield() {
+    default O elseNullable() {
         return subject().either()
-                        .fold(o -> Option.some(o),
-                              () -> Option.none());
+                        .orElse(null);
     }
+
+    default Option<O> elseOption() {
+        return subject().either()
+                        .fold(Option::some,
+                              Option::none);
+    }
+
 
     default O elseDefault(O defaultOutput) {
         return subject().either()
@@ -138,12 +168,19 @@ public interface OrMatchClause1<V, I, O> extends Clause<MatchResult1<V, I, O>> {
                               defaultOutputSupplier);
     }
 
-    default <X extends RuntimeException> O elseThrow(Supplier<X> throwableSupplier) {
+    default Either<V, O> elseOriginalOrResult() {
+        return subject().either()
+                        .mapLeft(Tuple2::_1);
+    }
+
+    default <X extends RuntimeException> O elseThrow(Function<V, X> throwableMapper) {
         if (subject().either()
                      .isRight()) {
             return subject().either()
                             .orElse(null);
         }
-        throw throwableSupplier.get();
+        throw throwableMapper.apply(subject().either()
+                                             .leftOrElse(null)
+                                             ._1());
     }
 }
