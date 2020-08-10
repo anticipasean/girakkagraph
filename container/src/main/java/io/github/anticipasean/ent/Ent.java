@@ -3,6 +3,7 @@ package io.github.anticipasean.ent;
 import static java.util.Objects.requireNonNull;
 
 import com.oath.cyclops.types.persistent.PersistentMap;
+import com.oath.cyclops.types.persistent.views.MapView;
 import cyclops.companion.Streamable;
 import cyclops.control.Maybe;
 import cyclops.control.Option;
@@ -36,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -67,11 +69,11 @@ import java.util.stream.StreamSupport;
  * Target Types: <b>AddCourseRequest</b>, <b>CourseAddedResponse</b>
  * <p></p>
  * To be effective as intermediate containers, Ent key-value type parameters {@code <K> and <V>} need to both encapsulate the
- * various field data types of the entities but also enable intermediate calculations and mappings to be performed on them
- * easily. For example, {@code Ent<String, Member>} could be used for <b>Student</b> and <b>Teacher</b> since both
- * are <b>Member</b>s of the <b>School</b>. It is also possible to widen the value type all the way to java.lang.Object if
- * no narrower type can be used instead. <b>Pattern</b> functions and the match* methods on Ents e.g. {@code matchGet} make it
- * possible to operate on different key-value types without the use of additional types and subtypes or the visitor pattern.
+ * various field data types of the entities but also enable intermediate calculations and mappings to be performed on them easily.
+ * For example, {@code Ent<String, Member>} could be used for <b>Student</b> and <b>Teacher</b> since both are <b>Member</b>s of
+ * the <b>School</b>. It is also possible to widen the value type all the way to java.lang.Object if no narrower type can be used
+ * instead. <b>Pattern</b> functions and the match* methods on Ents e.g. {@code matchGet} make it possible to operate on different
+ * key-value types without the use of additional types and subtypes or the visitor pattern.
  * <p></p>
  * <b>Code Example:</b>
  * <pre>
@@ -134,7 +136,7 @@ import java.util.stream.StreamSupport;
  *            search and retrieval operations
  * @param <V> A <b>Value</b> type preferably immutable to make operations on these values not change those in the original Ent
  */
-public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
+public interface Ent<K, V> extends PersistentMap<K, V> {
 
     static final boolean PARALLEL = true;
 
@@ -799,6 +801,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      * Monadic Methods: Streams
      */
 
+    @Override
     default ReactiveSeq<Tuple2<K, V>> stream() {
         return toImmutableMap().stream();
     }
@@ -1104,12 +1107,14 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      * Map Data Structure Methods
      */
 
+    @Override
     default Option<V> get(K key) {
         requireNonNull(key,
                        "key");
         return toImmutableMap().get(key);
     }
 
+    @Override
     default V getOrElse(K key,
                         V defaultValue) {
         requireNonNull(key,
@@ -1119,6 +1124,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                           defaultValue);
     }
 
+    @Override
     default V getOrElseGet(K key,
                            Supplier<? extends V> defaultValueSupplier) {
         requireNonNull(key,
@@ -1129,6 +1135,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                              defaultValueSupplier);
     }
 
+    @Override
     default Ent<K, V> put(K key,
                           V value) {
         requireNonNull(key,
@@ -1139,6 +1146,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                      value));
     }
 
+    @Override
     default Ent<K, V> put(Tuple2<K, V> keyAndValue) {
 
         requireNonNull(keyAndValue,
@@ -1146,6 +1154,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
         return fromImmutableMap(toImmutableMap().put(keyAndValue));
     }
 
+    @Override
     default Ent<K, V> putAll(PersistentMap<? extends K, ? extends V> map) {
         requireNonNull(map,
                        "map");
@@ -1161,6 +1170,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                                                                     entry.getValue())));
     }
 
+    @Override
     default Ent<K, V> remove(K key) {
         requireNonNull(key,
                        "key");
@@ -1191,6 +1201,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
         return toImmutableMap().values();
     }
 
+    @Override
     default Ent<K, V> removeAllKeys(Iterable<? extends K> keys) {
         requireNonNull(keys,
                        "keys");
@@ -1203,22 +1214,26 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
         return toImmutableMap().containsValue(value);
     }
 
+    @Override
     default boolean isEmpty() {
         return toImmutableMap().isEmpty();
     }
 
+    @Override
     default boolean containsKey(K key) {
         requireNonNull(key,
                        "key");
         return toImmutableMap().containsKey(key);
     }
 
+    @Override
     default boolean contains(Tuple2<K, V> keyValueTuple) {
         requireNonNull(keyValueTuple,
                        "keyValueTuple");
         return toImmutableMap().contains(keyValueTuple);
     }
 
+    @Override
     default int size() {
         return toImmutableMap().size();
     }
@@ -1227,6 +1242,7 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
      * Testing Methods
      */
 
+    @Override
     default boolean allMatch(Predicate<? super Tuple2<K, V>> condition) {
         requireNonNull(condition,
                        "condition");
@@ -1689,6 +1705,20 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
                                        condition);
     }
 
+    /**
+     * Persistent Map Specific Methods
+     */
+
+    @Override
+    default boolean equalTo(PersistentMap<K, V> map) {
+        return toImmutableMap().equalTo(map);
+    }
+
+    @Override
+    default MapView<K, V> mapView() {
+        return toImmutableMap().mapView();
+    }
+
     static final class EntImpl<K, V> implements Ent<K, V> {
 
         private final ImmutableMap<K, V> data;
@@ -1703,5 +1733,21 @@ public interface Ent<K, V> extends Iterable<Tuple2<K, V>> {
             return data;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            EntImpl<?, ?> ent = (EntImpl<?, ?>) o;
+            return data.equals(ent.data);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(data);
+        }
     }
 }
